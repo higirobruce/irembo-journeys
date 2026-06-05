@@ -1,0 +1,28 @@
+/* Tweaks panel — floating customizer (lean, in-project) */
+.tweaks-fab {
+  position: fixed; left: 18px; bottom: 18px; z-index: 60;
+  width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--brand); color: #fff; cursor: pointer; box-shadow: var(--shadow-lg);
+  display: grid; place-items: center;
+}
+.tweaks-fab:hover { background: var(--brand-700); }
+.tweaks-panel {
+  position: fixed; left: 18px; bottom: 74px; z-index: 60; width: 264px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-lg);
+  box-shadow: var(--shadow-pop); padding: 14px 16px 16px;
+}
+.tw-head { display: flex; align-items: center; justify-content: space-between; font-weight: 800; font-size: .95rem; margin-bottom: 6px; }
+.tw-head button { border: none; background: none; color: var(--soft); cursor: pointer; font-size: .9rem; }
+.tw-row { margin-top: 12px; }
+.tw-section { font-size: .66rem; text-transform: uppercase; letter-spacing: .06em; color: var(--faint); font-weight: 800; margin: 12px 0 7px; }
+.tw-radio { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.tw-radio button { flex: 1; border: none; background: none; font: inherit; font-size: .76rem; font-weight: 600; color: var(--soft); padding: 6px 8px; border-radius: 999px; cursor: pointer; }
+.tw-radio button.on { background: var(--paper); color: var(--ink); box-shadow: var(--shadow-sm); }
+.tw-swatches { display: flex; gap: 8px; }
+.tw-swatch { width: 26px; height: 26px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; }
+.tw-swatch.on { border-color: var(--ink); box-shadow: 0 0 0 2px var(--paper) inset; }
+.tw-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; cursor: pointer; font-size: .84rem; font-weight: 600; color: var(--ink); margin-top: 14px; }
+.tw-switch { width: 38px; height: 22px; border-radius: 999px; background: var(--line); position: relative; transition: .18s; flex: 0 0 auto; }
+.tw-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-sm); transition: .18s; }
+.tw-switch.on { background: var(--brand); }
+.tw-switch.on::after { transform: translateX(16px); }
