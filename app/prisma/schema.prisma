@@ -1,0 +1,82 @@
+// M4 — Postgres schema (scaffold). Mirrors the canonical dataset + admin lifecycle.
+// Provision with: npx prisma migrate dev  (then `prisma db seed` loads dataset.json)
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status { draft review published }
+enum Source { irembo manual }
+enum Role   { editor reviewer publisher }
+
+model Agency {
+  id       String    @id
+  name     String
+  short    String?
+  color    String?
+  where    String?
+  type     String
+  services Service[]
+}
+
+model Artifact {
+  id    String  @id
+  name  String
+  bring Boolean @default(false)
+  // which agency issues it (denormalized from the producer; nullable for citizen-brought)
+  issuedBy String?
+}
+
+model Service {
+  id        String   @id
+  name      String
+  short     String?
+  agency    Agency   @relation(fields: [agencyId], references: [id])
+  agencyId  String
+  desc      String?
+  requires  String[] // artifact ids consumed
+  produces  String[] // artifact ids produced
+  costModel String   @default("free") // free | fee
+  durMin    Int      @default(0)
+  durMax    Int      @default(0)
+  durUnit   String   @default("day")  // instant|min|hour|day|week
+  hidden    Boolean  @default(false)
+  appliesWhen Json?  // condition tree (nullable)
+  rules     Json     @default("[]")   // [{severity,failureMode,when,message,mitigation}]
+  // lifecycle metadata
+  status    Status   @default(published)
+  source    Source   @default(irembo)
+  note      String?
+  updatedAt DateTime @updatedAt
+  audits    AuditLog[]
+}
+
+model Journey {
+  id               String   @id
+  name             String
+  blurb            String?
+  icon             String?
+  goalPhrases      String[]
+  outcomeArtifacts String[]
+  steps            String[] // ordered service ids
+}
+
+model User {
+  id    String @id @default(cuid())
+  email String @unique
+  name  String?
+  role  Role   @default(editor)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  service   Service  @relation(fields: [serviceId], references: [id])
+  serviceId String
+  actorEmail String
+  action    String   // created | edited | imported | approved | published
+  at        DateTime @default(now())
+  note      String?
+}

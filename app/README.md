@@ -7,8 +7,33 @@ Implements the Claude Design handoff (`gov-services-journies`) per `../plan.html
 ## Status
 - ✅ **M0 — Data unification** (`data/`)
 - ✅ **M1 — Engine port** to TypeScript (`engine/`) — verified identical to the design engine (222 layout comparisons)
-- ⏳ **M2 — Citizen app** (Next.js) — pixel-match the design
-- later: M3 admin · M4 backend + real scraper · M5 journey-assembly + Kinyarwanda content
+- ✅ **M2 — Citizen app** (Next.js) — `src/app` + `src/components`
+- ✅ **M3 — Admin console** (`/admin`) — catalog, review queue, editor, Import-from-Irembo wizard
+- 🟡 **M4 — Backend (scaffold)** — API routes + repo abstraction + auth roles + Prisma schema + server scraper seam (below)
+- later: M4 proper (provision Postgres, wire PrismaRepo, real fetch) · M5 journey-assembly + Kinyarwanda content
+
+## M4 backend (scaffold)
+A repository seam lets the API run **now** (in-memory `JsonRepo` over `dataset.json`) and swap to Postgres later (`PrismaRepo`) with no API changes.
+
+```
+src/lib/server/
+  auth.ts        roles (editor/reviewer/publisher) + requirePermission guard
+  repo.ts        DataRepo interface + JsonRepo (works today) + getRepo() factory
+  prismaRepo.ts  Postgres impl — skeleton (no @prisma/client import yet)
+  scraper.ts     server-side Irembo scrape; fetchPage() is the real-fetch seam
+src/app/api/
+  services/                 GET list · POST create (edit)
+  services/[id]/            GET one · PATCH (edit)
+  services/[id]/status/     POST promote (approve/publish — role-gated)
+  import/scrape/            POST {url} -> scraped draft + auto-linked deps (edit)
+  import/                   POST {svc,newArtifacts} -> review queue (edit)
+prisma/schema.prisma   Postgres models (Service/Artifact/Journey/User/AuditLog)
+prisma/seed.ts         loads dataset.json into the DB (scaffold)
+.env.example           DATABASE_URL · DATA_BACKEND · auth
+```
+Auth is a **dev stub**: role comes from the `x-user-role` header (default `publisher`); real session auth replaces `roleFromRequest()`. Verified: `/api/import/scrape` auto-links 3 + flags 2 new on the Construction Permit; publish is 403 for `editor`, 200 for `publisher`.
+
+**To make M4 real:** `npm i -D prisma tsx && npm i @prisma/client` → set `DATABASE_URL` → `npm run db:migrate` → `npm run db:seed` → implement `PrismaRepo` → set `DATA_BACKEND=prisma`.
 
 ## Layout
 ```
