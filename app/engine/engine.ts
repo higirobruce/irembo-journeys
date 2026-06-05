@@ -8,7 +8,7 @@
 import type {
   Dataset, Service, Profile, Condition, ActiveStep, Edge, EdgePath,
   LayoutNode, LayoutOpts, LayoutResult, Rollup, Warning,
-} from "./types.ts";
+} from "./types";
 
 export function createEngine(dataset: Dataset) {
   const SERVICES: Record<string, Service> = {};

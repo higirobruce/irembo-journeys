@@ -1,0 +1,146 @@
+/* ============================================================================
+   Irembo Journey Companion — visual system
+   Fresh, friendly gov-tech. Hanken Grotesk + JetBrains Mono.
+   Brand accent + dark mode are driven by CSS vars the app sets from Tweaks.
+   ============================================================================ */
+
+:root {
+  /* brand (--brand, --brand-700, --brand-soft are all set from JS on theme change) */
+  --brand: #0E6BA8;
+  --brand-700: #0a5488;
+  --brand-soft: #e6f1f9;
+
+  /* light theme surfaces */
+  --bg: #eef1f6;
+  --canvas: #f3f5f9;
+  --paper: #ffffff;
+  --ink: #16202b;
+  --soft: #59657a;
+  --faint: #8a96a8;
+  --line: #e3e8f0;
+  --line-2: #eef1f6;
+  --edge: #b9c4d4;
+
+  /* status */
+  --green: #1e9e5a;  --green-soft: #e4f5ec;
+  --amber: #c5851a;  --amber-soft: #fbf0d9;
+  --red:   #d2452f;  --red-soft:   #fae5e1;
+  --violet:#7c4dd6;  --violet-soft:#efe8fb;
+
+  --shadow-sm: 0 1px 2px rgba(20,32,46,.06), 0 1px 3px rgba(20,32,46,.05);
+  --shadow-md: 0 4px 12px rgba(20,32,46,.08), 0 2px 4px rgba(20,32,46,.05);
+  --shadow-lg: 0 18px 48px rgba(20,32,46,.16), 0 4px 12px rgba(20,32,46,.08);
+  --shadow-pop:0 24px 60px rgba(20,32,46,.22);
+
+  --r-sm: 8px; --r-md: 12px; --r-lg: 18px; --r-xl: 24px;
+
+  --sans: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+[data-theme="dark"] {
+  --bg: #0c1118;
+  --canvas: #0e141d;
+  --paper: #161e29;
+  --ink: #e8edf4;
+  --soft: #9fadbf;
+  --faint: #6b7889;
+  --line: #263141;
+  --line-2: #1d2735;
+  --brand-soft: #15293a;
+  --green-soft: #11271c;
+  --amber-soft: #2c2310;
+  --red-soft: #2e1714;
+  --violet-soft: #1f1733;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-md: 0 4px 14px rgba(0,0,0,.45);
+  --shadow-lg: 0 18px 48px rgba(0,0,0,.55);
+  --shadow-pop: 0 24px 60px rgba(0,0,0,.6);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+#root { height: 100vh; }
+
+.mono { font-family: var(--mono); }
+
+/* ---- app shell ---- */
+.app {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 22px; height: 60px; flex: 0 0 auto;
+  background: var(--paper); border-bottom: 1px solid var(--line);
+  z-index: 30;
+}
+.brandmark { display: flex; align-items: center; gap: 11px; }
+.brandmark .glyph {
+  width: 32px; height: 32px; border-radius: 9px;
+  background: var(--brand); display: grid; place-items: center; color: #fff;
+  flex: 0 0 auto;
+}
+.brandmark .name { font-weight: 800; font-size: 1.02rem; letter-spacing: -.01em; }
+.brandmark .name span { color: var(--faint); font-weight: 500; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.lang {
+  font-family: var(--mono); font-size: .74rem; color: var(--soft);
+  border: 1px solid var(--line); border-radius: var(--r-sm); padding: 6px 10px;
+  display: flex; align-items: center; gap: 6px; cursor: pointer; background: var(--paper);
+}
+.admin-link { display: flex; align-items: center; gap: 7px; font-size: .8rem; font-weight: 700; color: var(--brand);
+  text-decoration: none; border: 1px solid var(--brand); border-radius: var(--r-sm); padding: 6px 12px; background: var(--brand-soft); }
+.admin-link:hover { background: var(--brand); color: #fff; }
+.admin-link svg { width: 15px; height: 15px; }
+.audience-toggle {
+  display: flex; background: var(--bg); border: 1px solid var(--line);
+  border-radius: 999px; padding: 3px; gap: 2px;
+}
+.audience-toggle button {
+  border: none; background: none; font: inherit; font-size: .76rem; font-weight: 600;
+  color: var(--soft); padding: 5px 13px; border-radius: 999px; cursor: pointer;
+}
+.audience-toggle button.on { background: var(--paper); color: var(--ink); box-shadow: var(--shadow-sm); }
+
+/* ---- wizard rail ---- */
+.wiz { display: flex; align-items: center; gap: 10px; padding: 11px 22px;
+  background: var(--paper); border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+.wiz .step { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--faint); font-weight: 600; }
+.wiz .step .b { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--line);
+  display: grid; place-items: center; font-size: .74rem; font-weight: 800; color: var(--faint); }
+.wiz .step.active { color: var(--ink); }
+.wiz .step.active .b { border-color: var(--brand); background: var(--brand); color: #fff; }
+.wiz .step.done .b { border-color: var(--green); background: var(--green); color: #fff; }
+.wiz .arr { color: var(--line); }
+
+/* ---- generic ---- */
+.scroll { flex: 1; overflow: auto; }
+.container { max-width: 940px; margin: 0 auto; padding: 40px 26px 80px; }
+h1.title { font-size: 1.9rem; line-height: 1.1; margin: 0 0 8px; letter-spacing: -.02em; font-weight: 800; }
+p.sub { color: var(--soft); margin: 0 0 28px; font-size: 1.02rem; max-width: 56ch; }
+
+.btn { border: none; border-radius: var(--r-md); padding: 12px 22px; font: inherit;
+  font-size: .95rem; font-weight: 700; cursor: pointer; transition: .14s; white-space: nowrap; }
+.btn.primary { background: var(--brand); color: #fff; box-shadow: var(--shadow-sm); }
+.btn.primary:hover { background: var(--brand-700); }
+.btn.primary:disabled { background: var(--line); color: var(--faint); cursor: not-allowed; box-shadow: none; }
+.btn.ghost { background: transparent; color: var(--soft); }
+.btn.ghost:hover { color: var(--ink); }
+.row { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; }
+
+@keyframes fadeUp { from { opacity: .55; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .screen-anim { animation: fadeUp .26s cubic-bezier(.2,.7,.3,1); }
+}

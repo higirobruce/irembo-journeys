@@ -1,0 +1,4 @@
+{
+  "//": "Scopes ESM + Node TS type-stripping to the engine so regression.mjs can import engine.ts. The Next app root is intentionally NOT type:module (breaks React's server runtime).",
+  "type": "module"
+}
