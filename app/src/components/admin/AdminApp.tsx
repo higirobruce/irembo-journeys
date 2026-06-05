@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { AGENCIES } from "@/lib/data";
 import * as ADMIN from "@/lib/adminStore";
 import type { AdminState, AdminService } from "@/lib/adminStore";
+import type { Artifact } from "@engine/types";
 import { Catalog, ReviewQueue } from "./Catalog";
 import { JourneysView } from "./JourneysView";
 import { ServiceEditor } from "./ServiceEditor";
@@ -37,6 +38,11 @@ export function AdminApp() {
   function approve(id: string) {
     setState((s) => ({ ...s, services: { ...s.services, [id]: { ...s.services[id], _meta: { ...s.services[id]._meta, status: "published", updated: ADMIN.today() } } } }));
     flash("Approved & published");
+  }
+  function importComplete(svc: AdminService, newArtifacts: Record<string, Artifact>) {
+    setState((s) => ({ ...s, artifacts: { ...s.artifacts, ...newArtifacts }, services: { ...s.services, [svc.id]: svc } }));
+    setImporting(false); setSection("review");
+    flash(`Imported "${svc.name}" — added to the review queue`);
   }
   function resetAll() {
     if (!confirm("Reset all admin changes back to the seed data?")) return;
@@ -102,7 +108,7 @@ export function AdminApp() {
         )}
       </main>
 
-      {importing && <ImportWizard onClose={() => setImporting(false)} />}
+      {importing && <ImportWizard state={state} agencies={AGENCIES} onClose={() => setImporting(false)} onComplete={importComplete} />}
       {toast && <div className="toast"><span className="tk">✓</span>{toast}</div>}
     </div>
   );
