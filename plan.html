@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Irembo Journey Companion — Implementation Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  /* tokens lifted from the design bundle (styles.css) so this plan matches the target system */
+  :root{
+    --brand:#0E6BA8; --brand-700:#0a5488; --brand-soft:#e6f1f9;
+    --bg:#eef1f6; --canvas:#f3f5f9; --paper:#fff; --ink:#16202b; --soft:#59657a; --faint:#8a96a8;
+    --line:#e3e8f0; --line-2:#eef1f6; --edge:#b9c4d4;
+    --green:#1e9e5a; --green-soft:#e4f5ec; --amber:#c5851a; --amber-soft:#fbf0d9;
+    --red:#d2452f; --red-soft:#fae5e1; --violet:#7c4dd6; --violet-soft:#efe8fb;
+    --shadow-sm:0 1px 2px rgba(20,32,46,.06),0 1px 3px rgba(20,32,46,.05);
+    --shadow-md:0 4px 12px rgba(20,32,46,.08),0 2px 4px rgba(20,32,46,.05);
+    --r-sm:8px; --r-md:12px; --r-lg:18px;
+    --sans:"Hanken Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .mono{font-family:var(--mono)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--brand-soft);color:var(--brand-700);padding:1px 6px;border-radius:6px}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+  header.hero{background:linear-gradient(135deg,#0a2b45,#0E6BA8 70%,#1488cf);color:#fff;padding:50px 0 54px}
+  .tag{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);color:#dbeaf8;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;padding:5px 12px;border-radius:999px;margin-bottom:16px;font-weight:700}
+  header.hero h1{font-size:2.1rem;margin:0 0 10px;letter-spacing:-.02em;font-weight:800}
+  header.hero p{margin:0;color:#cfe2f4;max-width:720px;font-size:1.05rem}
+  .hmeta{margin-top:22px;display:flex;gap:24px;flex-wrap:wrap;color:#a9c8e4;font-size:.84rem}
+  .hmeta b{color:#fff;font-weight:700}
+  section{padding:40px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:1.4rem;margin:0 0 6px;letter-spacing:-.01em;font-weight:800;display:flex;align-items:center;gap:11px}
+  h2 .n{font-size:.82rem;font-weight:800;color:var(--brand);background:var(--brand-soft);width:30px;height:30px;display:grid;place-items:center;border-radius:9px;flex:0 0 auto}
+  .lead{color:var(--soft);margin:0 0 24px;max-width:780px;font-size:1rem}
+  h3{font-size:1.02rem;margin:22px 0 8px}
+  .grid{display:grid;gap:15px}
+  .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:780px){.g2,.g3{grid-template-columns:1fr}}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px;box-shadow:var(--shadow-sm)}
+  .card h4{margin:0 0 7px;font-size:.98rem;display:flex;align-items:center;gap:8px}
+  .card p{margin:0;color:var(--soft);font-size:.9rem}
+  .card ul{margin:7px 0 0;padding-left:18px;color:var(--soft);font-size:.89rem}.card li{margin:4px 0}
+  .pill{font-size:.68rem;font-weight:800;letter-spacing:.03em;padding:3px 9px;border-radius:999px;text-transform:uppercase;white-space:nowrap}
+  .p-have{background:var(--green-soft);color:var(--green)} .p-new{background:var(--violet-soft);color:var(--violet)}
+  .p-port{background:var(--amber-soft);color:var(--amber)} .p-dec{background:var(--brand-soft);color:var(--brand-700)}
+  table{width:100%;border-collapse:collapse;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow-sm);font-size:.88rem}
+  th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:var(--canvas);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--soft);font-weight:700}
+  tr:last-child td{border-bottom:none}
+  td code{font-size:.8rem}
+  pre{background:#0c1118;color:#dbe7f4;border-radius:var(--r-md);padding:16px 18px;overflow:auto;font-size:.79rem;line-height:1.55;font-family:var(--mono);box-shadow:var(--shadow-md)}
+  .layers{display:flex;flex-direction:column;gap:10px}
+  .layer{border:1px solid var(--line);border-radius:var(--r-md);padding:13px 16px;background:var(--paper);box-shadow:var(--shadow-sm)}
+  .layer .lh{font-weight:800;font-size:.82rem;text-transform:uppercase;letter-spacing:.04em;color:var(--brand);margin-bottom:4px}
+  .layer .lb{font-size:.88rem;color:var(--soft)}
+  .layer.eng{border-left:4px solid var(--brand)} .layer.ui{border-left:4px solid var(--green)} .layer.data{border-left:4px solid var(--amber)}
+  .phase{display:flex;gap:14px;align-items:flex-start;background:var(--paper);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--shadow-sm);margin-bottom:12px}
+  .phase .pn{flex:0 0 38px;height:38px;border-radius:10px;background:var(--brand-soft);color:var(--brand);font-weight:800;display:grid;place-items:center}
+  .phase.done .pn{background:var(--green-soft);color:var(--green)}
+  .phase .pb{flex:1}.phase .pb h4{margin:0 0 3px;font-size:1rem}.phase .pb p{margin:0;color:var(--soft);font-size:.89rem}
+  .phase .pb .out{margin-top:7px;font-size:.82rem;color:var(--ink)}
+  .decision{border:1px dashed var(--brand);border-radius:var(--r-md);padding:14px 16px;margin-bottom:11px;background:var(--paper)}
+  .decision .q{font-weight:700;color:var(--ink);margin-bottom:4px}
+  .decision .rec{font-size:.88rem;color:var(--soft)}
+  .decision .rec b{color:var(--green)}
+  .quote{border-left:4px solid var(--brand);background:var(--brand-soft);padding:14px 18px;border-radius:0 12px 12px 0;color:#0a3a5e;margin:18px 0;font-size:.95rem}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0;font-size:.8rem;color:var(--soft)}
+  footer{padding:34px 0 70px;color:var(--faint);font-size:.85rem}
+</style>
+</head>
+<body>
+
+<header class="hero"><div class="wrap">
+  <span class="tag">Implementation Plan · align before build</span>
+  <h1>Irembo Journey Companion</h1>
+  <p>Aligning the <b>Claude Design handoff bundle</b> (<span class="mono">gov-services-journies</span>) with our existing project, into one build plan. The design is a direct continuation of our prototype — this plan unifies the two data models, sets the target architecture, and surfaces the decisions to confirm <em>before</em> any production code is written.</p>
+  <div class="hmeta">
+    <span>Design source: <b>claude.ai/design</b> bundle, 2 chats, citizen app + admin</span>
+    <span>Our base: <b>dataset.json · schema.json · wireframes.html</b></span>
+    <span>Status: <b>M0 + M1 complete ✓ — citizen app (M2) next</b></span>
+  </div>
+</div></header>
+
+<!-- 1 -->
+<section><div class="wrap">
+  <h2><span class="n">1</span>What the design delivers</h2>
+  <p class="lead">The bundle is a high-fidelity HTML/CSS/JS prototype (React 18 + in-browser Babel — prototype-only). Two surfaces, one shared data + engine layer.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h4>🧭 Citizen app <span class="pill p-new">new fidelity</span></h4>
+      <p>The journey assistant, built around a left→right dependency <b>graph</b> (the centerpiece we'd only timelined).</p>
+      <ul>
+        <li>3-screen flow: <b>Goal → Questions → Journey graph</b></li>
+        <li>Sugiyama-lite DAG layout (layered, crossing-reduced), bezier edges</li>
+        <li>Citizen-friendly nodes: icon · step number · plain "where you do it" · human time · "easy to forget" flag</li>
+        <li>Click node → detail panel; <b>progress tracking</b> (unlock dependents, green flow); filters; pan/zoom</li>
+        <li><b>6 journeys</b> fully modeled: business, land, birth, passport, driving, marriage</li>
+        <li>Tweaks: node variant (Cards/Minimal/Transit), density, dark mode, brand color, language toggle</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>🛠️ Admin console <span class="pill p-new">new surface</span></h4>
+      <p>How service data gets in and stays trustworthy — <span class="mono">admin.html</span>, linked from the citizen topbar.</p>
+      <ul>
+        <li><b>Catalog dashboard</b> — every service with status, source, journeys-using, KPIs, search/filter</li>
+        <li><b>Import from Irembo</b> wizard: Source (URL) → Extract (scrape + parsed fields w/ confidence) → <b>Dependencies</b> (auto-suggested links + new-doc flagging) → Done</li>
+        <li><b>Service editor</b> — form + live "neighbourhood" graph preview (comes-before → this → unlocks)</li>
+        <li><b>Lifecycle</b>: Draft → Needs review → Published, with a review queue; localStorage persistence</li>
+      </ul>
+    </div>
+  </div>
+  <div class="quote"><b>Key realization:</b> the admin's Draft→Review→Published lifecycle <em>is</em> the governance mechanism for the data-quality problem we'd flagged — every fee/rule marked <code>CONFIRM</code> / <code>sourceConfidence: needs-verification</code> now has a workflow to become <code>verified</code>.</div>
+</div></section>
+
+<!-- 2 -->
+<section><div class="wrap">
+  <h2><span class="n">2</span>What we already have</h2>
+  <div class="grid g3">
+    <div class="card"><h4>data/dataset.json <span class="pill p-have">keep</span></h4><p>Canonical artifact-based model — 2 journeys, 27 rules, validated. The <b>contract</b> the design's <code>dataset.js</code> mirrors.</p></div>
+    <div class="card"><h4>data/schema.json <span class="pill p-have">keep + extend</span></h4><p>The JSON Schema. More rigorous than the design's plain-JS data — we keep it as the contract and add the design's new fields.</p></div>
+    <div class="card"><h4>wireframes.html <span class="pill p-port">superseded</span></h4><p>Our functional prototype + the first graph view. The design supersedes it for UI; its engine is now in <code>engine.js</code>.</p></div>
+    <div class="card"><h4>brainstorm.html <span class="pill p-have">strategy</span></h4><p>Locked decisions (web-app-first, beside, free public good, human-in-loop). This plan must respect them.</p></div>
+    <div class="card"><h4>extension/ SPEC + adapters <span class="pill p-dec">Phase 2</span></h4><p>The agent side-panel spec — deferred behind the web app, unchanged.</p></div>
+    <div class="card"><h4>Validation harness <span class="pill p-have">reuse</span></h4><p>The Node referential-integrity + graph-completeness checks. Becomes our data CI.</p></div>
+  </div>
+</div></section>
+
+<!-- 3 -->
+<section><div class="wrap">
+  <h2><span class="n">3</span>The alignment thesis</h2>
+  <p class="lead">The design and our repo are not two things to merge awkwardly — they are <strong>the same system at two maturities</strong>. The design literally bundled our <code>wireframes.html</code> and extended its engine. So the alignment is mostly <em>promotion</em>, not reconciliation:</p>
+  <div class="grid g3">
+    <div class="card"><h4>One data model</h4><p><code>dataset.json</code> + <code>schema.json</code> become the <b>single source of truth</b>. The design's <code>dataset.js</code> is its richer content; we fold that in and validate against the schema.</p></div>
+    <div class="card"><h4>One engine</h4><p>The design's <code>engine.js</code> (Sugiyama layout, critical-path rollup, friendly formatting) <b>supersedes</b> our wireframe engine. Port to TypeScript; keep it pure & framework-free.</p></div>
+    <div class="card"><h4>Two UIs, shared core</h4><p>Citizen app and admin console are both thin React clients over the same engine + data. The future side-panel becomes a third client.</p></div>
+  </div>
+</div></section>
+
+<!-- 4 -->
+<section><div class="wrap">
+  <h2><span class="n">4</span>Data-model reconciliation <span style="font-size:.8rem;font-weight:600;color:var(--soft)">(the core of "align the design with the implementation")</span></h2>
+  <p class="lead">Both use the artifact-based <code>req</code>/<code>pro</code> graph. The design added fields and content. Decision per concept:</p>
+  <table>
+    <thead><tr><th>Concept</th><th>Our schema.json</th><th>Design dataset.js</th><th>Decision</th></tr></thead>
+    <tbody>
+      <tr><td><b>Agencies</b></td><td>id, name, type</td><td>+ <code>color</code>, <code>short</code>, <code>where</code> (14 agencies incl. civil, police, immigration, court)</td><td><span class="pill p-port">extend schema</span> add color/short/where; import all 14</td></tr>
+      <tr><td><b>Artifacts</b></td><td>id, name, kind, issuedBy, bring</td><td>id, name, <code>bring</code> (50+ across 6 journeys)</td><td><span class="pill p-port">merge</span> keep our richer fields; import the new artifacts</td></tr>
+      <tr><td><b>Services</b></td><td>id, name, agency, channel, requires, produces, cost{}, duration{}, appliesWhen, rules[]</td><td>id, name, <code>short</code>, <code>ag</code>, <code>cost</code>(free/fee), <code>du</code>+<code>dmin/dmax</code>, <code>req</code>/<code>pro</code>, <code>hidden</code>, <code>when</code>, <code>desc</code>, rules[]</td><td><span class="pill p-dec">unify naming</span> map <code>ag→agency</code>, <code>du/dmin/dmax→duration</code>, <code>when→appliesWhen</code>; add <code>short</code>, <code>desc</code>, <code>hidden</code> to schema</td></tr>
+      <tr><td><b>Rules</b></td><td>id, kind, severity, failureMode, when, message, mitigation</td><td>sev, mode, when, msg, tip</td><td><span class="pill p-dec">map fields</span> <code>sev→severity</code>, <code>mode→failureMode</code>, <code>msg→message</code>, <code>tip→mitigation</code></td></tr>
+      <tr><td><b>Journeys</b></td><td>id, name, goalPhrases, outcomeArtifacts, steps[] (2 journeys)</td><td>title, <code>match[]</code>, <code>icon</code>, steps[] (<b>6 journeys</b>)</td><td><span class="pill p-new">import 4 new</span> birth, passport, driving, marriage</td></tr>
+      <tr><td><b>Questions</b></td><td>(in wireframe only)</td><td><code>QUESTIONS[journeyId]</code> — adaptive intake per journey</td><td><span class="pill p-port">promote</span> into dataset + schema</td></tr>
+      <tr><td><b>Friendly fields</b></td><td>—</td><td>friendly time, "where", step order (derived in engine)</td><td><span class="pill p-have">keep in engine</span> derived, not stored</td></tr>
+      <tr><td><b>Admin metadata</b></td><td>sourceConfidence (dataset-level)</td><td><code>_meta</code>: status, source, updated, note (per service)</td><td><span class="pill p-new">adopt per-service</span> <code>_meta</code> supersedes dataset-level confidence</td></tr>
+    </tbody>
+  </table>
+  <h3>Resulting canonical shape (per service)</h3>
+  <pre>{
+  "id": "trading",
+  "name": "Trading license (district)",
+  "short": "Trading license",            // NEW (design) — node label
+  "agency": "district",                  // was ag
+  "desc": "A separate annual district license…",  // NEW
+  "cost": { "model": "fee" },
+  "duration": { "min": 1, "max": 7, "unit": "day" },   // was du/dmin/dmax
+  "requires": ["certificate","premises-proof"],
+  "produces": ["trading-license"],
+  "hidden": true,                        // NEW — "easy to forget"
+  "appliesWhen": null,                   // was when
+  "rules": [ { "severity":"high","failureMode":"rejection","message":"…","mitigation":"…" } ],
+  "_meta": { "status":"published","source":"irembo","updated":"2026-05-12","note":"" }  // admin
+}</pre>
+  <div class="quote">Net: <b>one</b> <code>dataset.json</code> with 6 journeys, validated by an <b>extended</b> <code>schema.json</code>. A one-time migration script converts the design's <code>dataset.js</code> → our schema shape; the engine reads the unified data. No more two copies (the gap we flagged when the wireframe embedded its data).</div>
+</div></section>
+
+<!-- 5 -->
+<section><div class="wrap">
+  <h2><span class="n">5</span>Target architecture</h2>
+  <p class="lead">Keep the prototype's clean separation (pure data + pure engine + thin UI), but build it for production. The engine and data are framework-agnostic so the citizen app, admin, and future side-panel all reuse them.</p>
+  <div class="layers">
+    <div class="layer data"><div class="lh">Data layer · <span class="mono">/packages/data</span></div><div class="lb"><code>dataset.json</code> (6 journeys) + <code>schema.json</code> + migration & validation scripts. The single source of truth, version-controlled, CI-validated.</div></div>
+    <div class="layer eng"><div class="lh">Engine · <span class="mono">/packages/engine</span> (TypeScript)</div><div class="lb">Port of <code>engine.js</code>: profile/conditions, <code>activeSteps</code>, <code>buildEdges</code>, Sugiyama layout, status, critical-path rollup, warnings, friendly formatters. Pure, tested, no DOM.</div></div>
+    <div class="layer ui"><div class="lh">Citizen app · <span class="mono">/apps/citizen</span> (Next.js + TS)</div><div class="lb">GoalScreen · QuestionsScreen · GraphCanvas + NodeCard · DetailPanel · JourneyBar · TweaksPanel · icons. Reads engine output. SSR/SEO so each journey is an indexable, shareable URL.</div></div>
+    <div class="layer ui"><div class="lh">Admin console · <span class="mono">/apps/admin</span> (React + TS)</div><div class="lb">Catalog · ImportWizard (Source/Extract/Dependencies/Done) · ServiceEditor + MiniGraph · ReviewQueue. Writes data via API; same engine for previews.</div></div>
+    <div class="layer"><div class="lh">Backend · <span class="mono">/services/api</span> + scraper (new)</div><div class="lb">Real DB (Postgres), data API, auth/roles, and the <b>server-side Irembo scraper</b> the prototype simulates. Out of scope for Phase 1 demo; in scope for Phase 2.</div></div>
+  </div>
+  <h3>Stack decision <span style="color:var(--green)">✓ locked</span></h3>
+  <p class="lead" style="margin-bottom:8px"><b>Next.js + TypeScript.</b> The design is already React; the engine/data port cleanly to TS. Next.js (over plain Vite) gives <b>SSR/SEO</b> — each journey becomes a server-rendered, indexable, shareable URL, which matters for a public-good tool people find by searching "how to open a restaurant in Rwanda." The pure engine + data live as framework-agnostic packages so the admin and future side-panel reuse them. Tokens become CSS variables (already structured that way in <code>styles.css</code>).</p>
+</div></section>
+
+<!-- 6 -->
+<section><div class="wrap">
+  <h2><span class="n">6</span>Component map (design → target)</h2>
+  <div class="grid g2">
+    <div class="card"><h4>Citizen app</h4><ul>
+      <li><code>App</code> · screen state machine (1/2/3)</li>
+      <li><code>TopBar</code> · brand · audience toggle · lang · Admin link</li>
+      <li><code>Wizard</code> · 3-step rail</li>
+      <li><code>GoalScreen</code> · text match (<code>matchGoal</code>) + journey cards</li>
+      <li><code>QuestionsScreen</code> · adaptive intake from <code>QUESTIONS</code></li>
+      <li><code>GraphCanvas</code> + <code>NodeCard</code> · the DAG (3 variants)</li>
+      <li><code>DetailPanel</code> · need-first / good-to-know / unlocks</li>
+      <li><code>JourneyBar</code> · summary stats · filters · progress · heads-up card</li>
+      <li><code>TweaksPanel</code> · variant/density/dark/brand/lang</li>
+      <li><code>icons</code> · JourneyIcons + AgencyIcons</li>
+    </ul></div>
+    <div class="card"><h4>Admin console</h4><ul>
+      <li><code>AdminApp</code> · nav (Catalog / Journeys / Review)</li>
+      <li><code>Catalog</code> + <code>ServiceRow</code> + <code>StatusPill</code> · KPIs, search/filter</li>
+      <li><code>ImportWizard</code> · <code>ScrapeAnimation</code> → <code>ExtractReview</code> → <code>DepCard</code> linking → done</li>
+      <li><code>ServiceEditor</code> + <code>RuleEditor</code> + <code>ArtifactPicker</code></li>
+      <li><code>MiniGraph</code> · live neighbourhood preview (shared engine)</li>
+      <li><code>ReviewQueue</code> · approve / publish</li>
+      <li><code>JourneysView</code> · <span class="pill p-new">to build</span> journey-assembly editor (the prototype's stub)</li>
+    </ul></div>
+  </div>
+</div></section>
+
+<!-- 7 -->
+<section><div class="wrap">
+  <h2><span class="n">7</span>Design tokens to adopt</h2>
+  <div class="grid g3">
+    <div class="card"><h4>Type</h4><p><b>Hanken Grotesk</b> (400–800) for UI; <b>JetBrains Mono</b> for codes/labels. Already loaded via Google Fonts.</p></div>
+    <div class="card"><h4>Brand & theme</h4><p>Single <code>--brand</code> (#0E6BA8) with JS-derived <code>--brand-700</code>/<code>--brand-soft</code>. Light + <code>[data-theme="dark"]</code>. Brand color is user-tweakable.</p></div>
+    <div class="card"><h4>Agency palette</h4><p>14 fixed agency colors drive node/edge coding across both apps — part of the data, not the theme.</p></div>
+    <div class="card"><h4>Status</h4><p>green / amber / red / violet (+ soft variants) for done/heads-up/blocking/hidden.</p></div>
+    <div class="card"><h4>Surfaces</h4><p>bg / canvas / paper / line tiers; radii 8–24px; three shadow tiers. This very plan uses them.</p></div>
+    <div class="card"><h4>Capture note (from chat)</h4><p>Avoid <code>color-mix()</code> — the design replaced it with JS-computed shades for export safety. Keep that.</p></div>
+  </div>
+</div></section>
+
+<!-- 8 -->
+<section><div class="wrap">
+  <h2><span class="n">8</span>The admin pipeline = data governance</h2>
+  <p class="lead">This is where the design solves a strategy problem (Q4: "get the real dependency rules"). The flow, end to end:</p>
+  <pre>Irembo page ──scrape──► raw fields + confidence ──► Extract review (edit) ──►
+Dependency linker (auto-match docs → known artifacts; suggest edges; flag NEW) ──►
+imported as "Needs review" ──► Review queue ──► Published ──► citizen graph
+                                   ▲
+                          Service editor (+ live MiniGraph preview) edits any stage</pre>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card"><h4>What's real in the prototype</h4><ul>
+      <li>The full flow, field parsing, confidence badges, dependency auto-matching &amp; new-doc flagging</li>
+      <li>Lifecycle states + review queue + localStorage persistence</li>
+      <li>Live neighbourhood graph preview via the shared engine</li>
+    </ul></div>
+    <div class="card"><h4>What's mocked → needs backend</h4><ul>
+      <li><b>The scrape itself</b> — browsers can't cross-origin fetch Irembo. Production = server-side scraper/fetcher job.</li>
+      <li><b>Persistence</b> — localStorage → real DB + data API.</li>
+      <li><b>Admin edits → citizen graph</b> — prototype didn't wire them back; needs the <b>journey-assembly editor</b> + publish pipeline.</li>
+      <li><b>Auth/roles</b> — who can edit/approve/publish.</li>
+    </ul></div>
+  </div>
+</div></section>
+
+<!-- 9 -->
+<section><div class="wrap">
+  <h2><span class="n">9</span>Build phases</h2>
+  <p class="lead">Sequenced to land a working citizen app first (the locked Phase-1 wedge), then the admin data pipeline, then backend. Each milestone is demoable.</p>
+
+  <div class="phase done"><div class="pn">✓</div><div class="pb"><h4>M0 · Data unification</h4><p>Migrate design <code>dataset.js</code> → our <code>dataset.json</code>; extend <code>schema.json</code> for new fields; run the validation harness over all 6 journeys.</p><div class="out">→ One validated source of truth.</div></div></div>
+  <div class="phase done"><div class="pn">✓</div><div class="pb"><h4>M1 · Engine port (TS) <span class="pill p-have">done</span></h4><p>Ported <code>engine.js</code> → typed <code>engine/engine.ts</code> on the canonical data shape. Regression test runs the design engine and the port side-by-side.</p><div class="out">→ ✓ Verified identical across 222 layout comparisons (positions, edges, rollups, warnings, status, formatters).</div></div></div>
+  <div class="phase"><div class="pn">2</div><div class="pb"><h4>M2 · Citizen app (the Phase-1 wedge)</h4><p>GoalScreen → QuestionsScreen → GraphCanvas with all interactions, detail panel, progress, filters, tweaks, dark mode. Pixel-match the design.</p><div class="out">→ Public, shareable journey explorer for citizens + agents. Ship this alone.</div></div></div>
+  <div class="phase"><div class="pn">3</div><div class="pb"><h4>M3 · Admin console (front-end)</h4><p>Catalog, ImportWizard, ServiceEditor + MiniGraph, ReviewQueue — against a local/JSON-backed store first.</p><div class="out">→ Internal tool to curate the 6 journeys + lifecycle.</div></div></div>
+  <div class="phase"><div class="pn">4</div><div class="pb"><h4>M4 · Backend: API + DB + real scraper</h4><p>Postgres + data API + auth/roles; replace the simulated scrape with a server-side Irembo scraper; wire admin edits → published dataset → citizen app.</p><div class="out">→ Live data pipeline; <code>needs-verification → verified</code> becomes real.</div></div></div>
+  <div class="phase"><div class="pn">5</div><div class="pb"><h4>M5 · Journey-assembly editor + i18n</h4><p>Drag imported services into citizen paths (the prototype stub); wire Kinyarwanda copy through the language toggle.</p><div class="out">→ New services go fully live; bilingual.</div></div></div>
+  <div class="phase"><div class="pn">2ⁿᵈ</div><div class="pb"><h4>Later · Agent side-panel</h4><p>Unchanged from <code>extension/SPEC.md</code> — a third client of the same engine + data, once the web app proves the model.</p><div class="out">→ Deferred per brainstorm v0.7.</div></div></div>
+</div></section>
+
+<!-- 10 -->
+<section><div class="wrap">
+  <h2><span class="n">10</span>Decisions</h2>
+  <p class="lead"><b style="color:var(--green)">✓ locked</b> = confirmed; <b style="color:var(--amber)">○ open</b> = still to settle (don't block M0–M2).</p>
+  <div class="decision" style="border-style:solid;border-color:var(--green)"><div class="q">D1 · Tech stack <span class="pill p-have">✓ locked</span></div><div class="rec"><b>Next.js + TypeScript.</b> SSR/SEO so public journey pages are indexable & shareable. Engine + data as framework-agnostic packages.</div></div>
+  <div class="decision" style="border-style:solid;border-color:var(--green)"><div class="q">D2 · First shippable <span class="pill p-have">✓ locked</span></div><div class="rec"><b>Citizen app only (M0–M2), no backend.</b> Data ships as static validated JSON. Fastest path to the public wedge; admin + scraper follow.</div></div>
+  <div class="decision" style="border-style:solid;border-color:var(--green)"><div class="q">D3 · Data source <span class="pill p-have">✓ locked</span></div><div class="rec"><b>Pure HTML scraping (beside).</b> Server-side fetch + parse of public Irembo pages — no partnership required, matches the locked "beside, not integrated" stance. Built in Phase 4; design the parser to tolerate page changes (selectors-as-config, like the side-panel adapters).</div></div>
+  <div class="decision" style="border-style:solid;border-color:var(--green)"><div class="q">D6 · Data accuracy <span class="pill p-have">✓ locked</span></div><div class="rec"><b>You arrange domain reviewers.</b> We build the admin review queue + lifecycle; you bring people who know the real Irembo/agency processes to verify. Until then the citizen app carries a visible "estimates — verify with Irembo" note.</div></div>
+  <div class="decision" style="border-style:solid;border-color:var(--green)"><div class="q">D4 · Persistence & hosting <span class="pill p-have">✓ locked</span></div><div class="rec"><b>Citizen app static-hosted (M2); host TBD (Vercel/Netlify vs gov infra), admin DB later.</b> The static citizen build is host-agnostic, so we defer the host choice without blocking — revisit alongside the "free public good / grant-funded" model when the admin backend (M4) needs a home.</div></div>
+  <div class="decision" style="border-style:solid;border-color:var(--green)"><div class="q">D5 · Admin auth & roles <span class="pill p-have">✓ locked</span></div><div class="rec"><b>Editor / Reviewer / Publisher roles gating the lifecycle.</b> Editor drafts &amp; imports → Reviewer approves out of the queue → Publisher pushes to the live citizen dataset. Wired in M4 (needs the backend); the M3 front-end is built role-aware from the start.</div></div>
+  <div class="decision" style="border-style:solid;border-color:var(--green)"><div class="q">D7 · Kinyarwanda <span class="pill p-have">✓ in scope</span></div><div class="rec"><b>Bilingual is a committed goal, not a maybe.</b> So we build i18n-ready from M0: every citizen-facing string (step <code>name</code>/<code>short</code>/<code>desc</code>, gotchas, "where", UI labels) carries an <code>en</code> + <code>rw</code> slot in the data model, even if <code>rw</code> starts empty. Content translation + native review is the Phase-5 push; the structure is laid now so it's not a retrofit.</div></div>
+</div></section>
+
+<!-- 11 -->
+<section><div class="wrap">
+  <h2><span class="n">11</span>Known gaps the prototype leaves (from the chat)</h2>
+  <div class="grid g2">
+    <div class="card"><h4>⚠ Admin edits not wired to citizen graph</h4><p>Journeys aren't editable yet — the "journey assembly editor" is a stub. An imported service can't yet be dropped into a citizen path. → M5.</p></div>
+    <div class="card"><h4>⚠ Scrape is simulated</h4><p>Returns realistic extractions for a small mock catalog. Real fetch is a server job. → M4.</p></div>
+    <div class="card"><h4>⚠ Data is unverified</h4><p>Modeled, not policy-checked. The lifecycle exists to fix this; the verification work itself is people, not code. → D6.</p></div>
+    <div class="card"><h4>✓ Preview journeys now full</h4><p>Birth, passport, driving, marriage are fully modeled with conditional branches (no longer stubs).</p></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  Implementation plan v1 · aligns the <span class="mono">gov-services-journies</span> design bundle with our <span class="mono">dataset.json / schema.json / brainstorm</span>. Nothing is built yet — this is the alignment artifact to confirm before M0.
+</div></footer>
+
+</body>
+</html>

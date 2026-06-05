@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Irembo Companion — Brainstorm</title>
+<style>
+  :root{
+    --ink:#0c1421; --ink-soft:#43526b; --line:#e3e8f0; --bg:#f6f8fb;
+    --card:#ffffff; --accent:#1565d8; --accent-soft:#e8f0ff;
+    --green:#118a5b; --green-soft:#e3f6ec; --amber:#b3760a; --amber-soft:#fdf2dc;
+    --red:#c0392b; --red-soft:#fdecea; --violet:#6c3fd1; --violet-soft:#efe9fd;
+    --radius:14px; --shadow:0 1px 2px rgba(16,30,54,.06),0 8px 24px rgba(16,30,54,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    color:var(--ink);background:var(--bg);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  header.hero{background:linear-gradient(135deg,#0c1421,#16335f 60%,#1565d8);color:#fff;padding:56px 0 60px}
+  header.hero h1{font-size:2.2rem;margin:0 0 8px;letter-spacing:-.02em}
+  header.hero p{margin:0;color:#c7d6f0;max-width:680px;font-size:1.05rem}
+  .badge{display:inline-block;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
+    color:#dce8ff;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:5px 11px;border-radius:999px;margin-bottom:18px}
+  .meta{margin-top:22px;display:flex;gap:26px;flex-wrap:wrap;color:#9fb6dc;font-size:.85rem}
+  section{padding:42px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:1.45rem;letter-spacing:-.01em;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+  h2 .num{font-size:.8rem;font-weight:700;color:var(--accent);background:var(--accent-soft);
+    width:30px;height:30px;display:grid;place-items:center;border-radius:8px}
+  .lead{color:var(--ink-soft);margin:0 0 26px;max-width:760px}
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 16px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 6px;font-size:1rem}
+  .card p{margin:0;color:var(--ink-soft);font-size:.92rem}
+  .tag{font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:9px}
+  .t-pain{background:var(--red-soft);color:var(--red)}
+  .t-gap{background:var(--amber-soft);color:var(--amber)}
+  .t-idea{background:var(--violet-soft);color:var(--violet)}
+  .t-win{background:var(--green-soft);color:var(--green)}
+  /* journey */
+  .journey{display:flex;gap:0;overflow-x:auto;padding:6px 2px 14px}
+  .step{min-width:150px;flex:1;position:relative;padding:0 8px}
+  .step .dot{width:14px;height:14px;border-radius:50%;background:var(--accent);margin:0 auto 10px;box-shadow:0 0 0 4px var(--accent-soft)}
+  .step::before{content:"";position:absolute;top:6px;left:-50%;width:100%;height:2px;background:var(--line);z-index:0}
+  .step:first-child::before{display:none}
+  .step .lab{text-align:center;font-size:.82rem}
+  .step .lab b{display:block;font-size:.86rem}
+  .step .lab span{color:var(--ink-soft);font-size:.76rem}
+  .step .friction{margin-top:8px;background:var(--red-soft);color:var(--red);font-size:.72rem;border-radius:8px;padding:6px 8px;text-align:center}
+  /* dependency graph */
+  .graphwrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px;box-shadow:var(--shadow);overflow:auto}
+  svg{display:block;min-width:760px;width:100%;height:auto}
+  .node rect{rx:10;ry:10;stroke-width:1.5}
+  .node text{font-size:12px;font-family:inherit;fill:var(--ink)}
+  .node .sub{font-size:9.5px;fill:var(--ink-soft)}
+  .edge{stroke:#9fb0c8;stroke-width:1.6;fill:none;marker-end:url(#arrow)}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:.8rem;color:var(--ink-soft)}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:middle}
+  /* table */
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  th,td{text-align:left;padding:12px 14px;font-size:.88rem;border-bottom:1px solid var(--line);vertical-align:top}
+  th{background:#f0f4fa;font-size:.74rem;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft)}
+  tr:last-child td{border-bottom:none}
+  .pill{font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:999px}
+  .pill.hi{background:var(--red-soft);color:var(--red)}
+  .pill.md{background:var(--amber-soft);color:var(--amber)}
+  .pill.lo{background:var(--green-soft);color:var(--green)}
+  ul.clean{margin:8px 0 0;padding-left:18px;color:var(--ink-soft);font-size:.9rem}
+  ul.clean li{margin:5px 0}
+  .quote{border-left:3px solid var(--accent);background:var(--accent-soft);padding:14px 18px;border-radius:0 10px 10px 0;color:#1a3a6b;font-style:italic;margin:18px 0}
+  .open{background:#fff;border:1px dashed var(--accent);border-radius:var(--radius);padding:16px 18px;margin-top:10px}
+  .open b{color:var(--accent)}
+  /* deep-dive step flow */
+  .stepflow{display:flex;flex-direction:column;gap:14px;margin-top:10px}
+  .stepcard{display:flex;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow)}
+  .stepcard .n{flex:0 0 34px;height:34px;border-radius:9px;background:var(--accent-soft);color:var(--accent);font-weight:800;display:grid;place-items:center}
+  .stepcard.tail .n{background:var(--violet-soft);color:var(--violet)}
+  .stepcard .body{flex:1;min-width:0}
+  .stepcard h3{margin:0 0 4px;font-size:1.02rem}
+  .stepcard p{margin:0;color:var(--ink-soft);font-size:.9rem}
+  .metarow{display:flex;gap:8px;flex-wrap:wrap;margin:9px 0 4px}
+  .mb{font-size:.71rem;font-weight:700;padding:3px 9px;border-radius:6px;background:#eef2f8;color:var(--ink-soft)}
+  .mb.actor{background:var(--accent-soft);color:var(--accent)}
+  .mb.free{background:var(--green-soft);color:var(--green)}
+  .mb.paid{background:var(--amber-soft);color:var(--amber)}
+  .rlabel{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--red);margin:10px 0 2px;display:block}
+  .rej{margin:0;padding:0;list-style:none}
+  .rej li{font-size:.85rem;color:#8a2b20;background:var(--red-soft);border-radius:7px;padding:6px 10px;margin:5px 0;display:flex;gap:8px;align-items:baseline}
+  .rej li::before{content:"✕";font-weight:800;color:var(--red);flex:0 0 auto}
+  pre{background:#0c1421;color:#dbe7ff;border-radius:12px;padding:16px 18px;overflow:auto;font-size:.8rem;line-height:1.5;box-shadow:var(--shadow);margin:6px 0}
+  pre .k{color:#7fb0ff}.pre .s{color:#9be7b4}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .files{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 14px}
+  .file{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-family:ui-monospace,monospace;font-size:.82rem;box-shadow:var(--shadow)}
+  .file b{color:var(--accent)}
+  /* extension mock */
+  .extlayout{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
+  @media(max-width:760px){.extlayout{grid-template-columns:1fr}}
+  .panelmock{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;font-size:.82rem}
+  .pm-bar{background:#0c1421;color:#fff;padding:9px 13px;font-size:.78rem;display:flex;justify-content:space-between;align-items:center}
+  .pm-bar b{font-weight:700}
+  .pm-head{padding:12px 14px;border-bottom:1px solid var(--line)}
+  .pm-head .goal{font-weight:700;font-size:.92rem}
+  .pm-head .prog{color:var(--ink-soft);font-size:.76rem;margin-top:2px}
+  .pm-alert{background:var(--red-soft);color:#8a2b20;padding:9px 13px;font-size:.78rem;border-bottom:1px solid var(--line);display:flex;gap:8px}
+  .pm-alert::before{content:"⚠";color:var(--red)}
+  .pm-list{padding:6px 6px 10px}
+  .pm-row{display:flex;align-items:flex-start;gap:9px;padding:8px 9px;border-radius:9px}
+  .pm-row:hover{background:#f6f8fb}
+  .sdot{flex:0 0 12px;height:12px;border-radius:50%;margin-top:3px}
+  .sdot.done{background:var(--green)}.sdot.ready{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .sdot.blocked{background:#cdd8e8;border:2px solid #9fb0c8}.sdot.na{background:#eef2f8;border:1px dashed #cdd8e8}
+  .pm-row .nm{font-size:.82rem;line-height:1.3}
+  .pm-row .meta2{color:var(--ink-soft);font-size:.72rem;margin-top:1px}
+  .pm-row .needs{color:var(--red);font-size:.72rem;margin-top:2px}
+  .htag{font-size:.6rem;font-weight:800;letter-spacing:.05em;background:var(--violet-soft);color:var(--violet);border-radius:4px;padding:1px 5px;margin-left:5px;vertical-align:middle}
+  .pm-foot{border-top:1px solid var(--line);padding:10px 13px;display:flex;gap:8px}
+  .pm-btn{flex:1;text-align:center;font-size:.76rem;font-weight:700;border-radius:8px;padding:7px;background:var(--accent);color:#fff}
+  .pm-btn.ghost{background:#eef2f8;color:var(--ink)}
+  .timeline{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+  .tl{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px 14px;box-shadow:var(--shadow)}
+  .tl .when{flex:0 0 110px;font-weight:700;font-size:.82rem;color:var(--accent)}
+  .tl .what{font-size:.86rem;color:var(--ink-soft)}
+  .tl .what b{color:var(--ink)}
+  footer{padding:34px 0 60px;color:var(--ink-soft);font-size:.85rem}
+  .kicker{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:4px}
+  .stat{font-size:1.7rem;font-weight:800;color:var(--ink);line-height:1}
+  .stat + p{margin-top:4px}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">Brainstorm · v0.7 · web app first</span>
+    <h1>Irembo Companion</h1>
+    <p>An AI guide that turns Rwanda's e-gov platform from a stack of isolated forms into one navigable life-event journey. <strong>v0.7 re-sequencing:</strong> build the standalone <em>Journey Explorer web app</em> first — anyone (citizen or agent) answers a few questions and sees their whole personalized path, including the steps people miss. The agent <em>side-panel</em> overlay comes later, once the journey model has proven itself.</p>
+    <div class="meta">
+      <span>Subject: irembo.gov.rw</span>
+      <span>Wedge: public web app · beside (not integrated) · human-in-the-loop</span>
+      <span>Model: free public good (grant-funded) · Kinyarwanda-first</span>
+    </div>
+  </div>
+</header>
+
+<!-- 1. PROBLEM FRAME -->
+<section><div class="wrap">
+  <h2><span class="num">1</span>The core mismatch</h2>
+  <p class="lead">Irembo is built around <strong>transactions</strong> (one service = one form = one payment). But citizens don't have "transactions" — they have <strong>life events</strong>: getting married, buying land, opening a business, sending a child abroad. A single life event silently fans out into 3–7 services across 4–5 agencies, each with its own prerequisites. The platform never shows the citizen this shape. The agent holds it — in their head.</p>
+
+  <div class="grid g3">
+    <div class="card"><span class="tag t-pain">Pain</span><h3>Invisible prerequisites</h3><p>You discover you needed a national ID, a tax clearance, or the <em>other</em> party's birth certificate only after you've started — and paid.</p></div>
+    <div class="card"><span class="tag t-pain">Pain</span><h3>No sense of "when"</h3><p>Is this 10 minutes or 3 weeks? Does step 2 block step 5? The citizen can't plan around a process they can't see.</p></div>
+    <div class="card"><span class="tag t-pain">Pain</span><h3>Fragmented status</h3><p>Five applications across five agencies = five places to check, no single answer to "where am I overall?"</p></div>
+  </div>
+
+  <div class="quote">The agent isn't selling a transaction. They're selling <strong>certainty and sequencing</strong> — knowing which door to knock on, in what order, with what in hand. That knowledge is exactly what software can encode.</div>
+</div></section>
+
+<!-- 2. CITIZEN JOURNEY -->
+<section><div class="wrap">
+  <h2><span class="num">2</span>The citizen path today (example: register a business)</h2>
+  <p class="lead">Mapping one real chain shows the friction. Notice how many steps are <em>prerequisite discovery</em> rather than the actual service.</p>
+
+  <div class="journey">
+    <div class="step"><div class="dot"></div><div class="lab"><b>Intent</b><span>"I want to open a shop"</span></div><div class="friction">Doesn't know where to start</div></div>
+    <div class="step"><div class="dot"></div><div class="lab"><b>National ID</b><span>NIDA — must be valid</span></div><div class="friction">Blocked if expired</div></div>
+    <div class="step"><div class="dot"></div><div class="lab"><b>Name reservation</b><span>RDB</span></div><div class="friction">Name often rejected</div></div>
+    <div class="step"><div class="dot"></div><div class="lab"><b>Business registration</b><span>RDB</span></div><div class="friction">Form jargon</div></div>
+    <div class="step"><div class="dot"></div><div class="lab"><b>Tax (TIN) + RRA</b><span>auto, but unclear</span></div><div class="friction">"Now what?"</div></div>
+    <div class="step"><div class="dot"></div><div class="lab"><b>Trading license</b><span>District</span></div><div class="friction">Separate channel</div></div>
+    <div class="step"><div class="dot"></div><div class="lab"><b>Sector permits</b><span>e.g. RSB, RDB tourism</span></div><div class="friction">Often missed entirely</div></div>
+  </div>
+
+  <p class="lead" style="margin-top:8px">The same shape repeats for <strong>marriage</strong> (both parties' birth certs → civil status appointment → certificate → ID update), <strong>land transfer</strong> (tax clearance → land title lookup → notary → transfer → new title), and <strong>going abroad</strong> (ID → good-conduct certificate → passport → sometimes academic doc legalization).</p>
+</div></section>
+
+<!-- 3. DEPENDENCY GRAPH -->
+<section><div class="wrap">
+  <h2><span class="num">3</span>Service dependency map</h2>
+  <p class="lead">The product insight: services form a <strong>directed graph</strong>, not a list. The companion's job is to compute the path through this graph for any goal, validate prerequisites <em>before</em> the citizen pays, and show it visually.</p>
+
+  <div class="graphwrap">
+    <svg viewBox="0 0 820 360" role="img" aria-label="Service dependency graph">
+      <defs>
+        <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+          <path d="M0,0 L7,3 L0,6 Z" fill="#9fb0c8"/>
+        </marker>
+      </defs>
+      <!-- edges -->
+      <g>
+        <path class="edge" d="M150,70 C220,70 220,55 295,55"/>
+        <path class="edge" d="M150,70 C220,70 220,140 295,140"/>
+        <path class="edge" d="M150,70 C210,70 210,225 295,225"/>
+        <path class="edge" d="M150,70 C210,70 210,310 295,310"/>
+        <path class="edge" d="M430,55 C500,55 500,55 565,55"/>
+        <path class="edge" d="M430,140 C500,140 500,130 565,130"/>
+        <path class="edge" d="M430,55 C500,55 500,205 565,205"/>
+        <path class="edge" d="M430,225 C500,225 500,205 565,205"/>
+        <path class="edge" d="M430,310 C500,310 500,285 565,285"/>
+        <path class="edge" d="M700,55 C740,55 740,110 700,130"/>
+      </g>
+      <!-- foundational -->
+      <g class="node">
+        <rect x="20" y="45" width="130" height="50" fill="#e8f0ff" stroke="#1565d8"/>
+        <text x="34" y="68" font-weight="700">National ID</text>
+        <text class="sub" x="34" y="84">NIDA · root of trust</text>
+      </g>
+      <!-- mid -->
+      <g class="node">
+        <rect x="295" y="32" width="135" height="46" fill="#fff" stroke="#cdd8e8"/>
+        <text x="309" y="52" font-weight="600">Birth certificate</text>
+        <text class="sub" x="309" y="68">Civil status</text>
+      </g>
+      <g class="node">
+        <rect x="295" y="117" width="135" height="46" fill="#fff" stroke="#cdd8e8"/>
+        <text x="309" y="137" font-weight="600">Good conduct</text>
+        <text class="sub" x="309" y="153">RNP</text>
+      </g>
+      <g class="node">
+        <rect x="295" y="202" width="135" height="46" fill="#fff" stroke="#cdd8e8"/>
+        <text x="309" y="222" font-weight="600">Tax clearance</text>
+        <text class="sub" x="309" y="238">RRA</text>
+      </g>
+      <g class="node">
+        <rect x="295" y="287" width="135" height="46" fill="#fff" stroke="#cdd8e8"/>
+        <text x="309" y="307" font-weight="600">Land title</text>
+        <text class="sub" x="309" y="323">RLMUA</text>
+      </g>
+      <!-- outcomes -->
+      <g class="node">
+        <rect x="565" y="32" width="135" height="46" fill="#e3f6ec" stroke="#118a5b"/>
+        <text x="579" y="52" font-weight="700">Marriage cert</text>
+        <text class="sub" x="579" y="68">life event</text>
+      </g>
+      <g class="node">
+        <rect x="565" y="107" width="135" height="46" fill="#e3f6ec" stroke="#118a5b"/>
+        <text x="579" y="127" font-weight="700">Passport</text>
+        <text class="sub" x="579" y="143">life event</text>
+      </g>
+      <g class="node">
+        <rect x="565" y="182" width="135" height="46" fill="#e3f6ec" stroke="#118a5b"/>
+        <text x="579" y="202" font-weight="700">Business reg.</text>
+        <text class="sub" x="579" y="218">life event</text>
+      </g>
+      <g class="node">
+        <rect x="565" y="262" width="135" height="46" fill="#e3f6ec" stroke="#118a5b"/>
+        <text x="579" y="282" font-weight="700">Land transfer</text>
+        <text class="sub" x="579" y="298">life event</text>
+      </g>
+    </svg>
+  </div>
+  <div class="legend">
+    <span><i style="background:#1565d8"></i>Foundational identity (root)</span>
+    <span><i style="background:#cdd8e8"></i>Intermediate prerequisite service</span>
+    <span><i style="background:#118a5b"></i>Life-event outcome the citizen actually wants</span>
+  </div>
+  <p class="lead" style="margin-top:16px">If this graph exists as <strong>data</strong> (not tribal knowledge), then path-finding, eligibility checks, cost/time roll-ups, and "what's blocking me" all become queries against it.</p>
+</div></section>
+
+<!-- 3B. DEEP DIVE: BUSINESS REGISTRATION -->
+<section style="background:#fbfcfe"><div class="wrap">
+  <h2><span class="num" style="background:var(--violet-soft);color:var(--violet)">DD</span>Deep dive — "Open a business," end to end</h2>
+  <p class="lead">The worked example behind §3. Running case: a citizen opening a small <strong>restaurant</strong> as a sole proprietorship ("enterprise"). The crucial finding for the product: the <strong>RDB certificate — what almost everyone means by "registering a business" — is only step 3 of 8.</strong> The journey has a long, invisible compliance tail, and rejections cluster at the <em>boundaries between agencies</em>, which is precisely where agents earn their fee.</p>
+
+  <div class="stepflow">
+
+    <div class="stepcard">
+      <div class="n">0</div>
+      <div class="body">
+        <h3>Decide the legal structure</h3>
+        <p>Sole proprietorship / "enterprise" (simplest, one owner) vs. company / Ltd (shareholders, articles of association, can raise capital). This choice silently changes every later step.</p>
+        <div class="metarow"><span class="mb actor">Decision · not on Irembo</span><span class="mb free">No fee</span><span class="mb">Minutes</span></div>
+        <span class="rlabel">Where it goes wrong</span>
+        <ul class="rej">
+          <li>Picks "company" when an enterprise was intended → asked for articles &amp; directors they don't have, and abandons.</li>
+          <li>Picks "enterprise" for a multi-partner venture → has to re-register later.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stepcard">
+      <div class="n">1</div>
+      <div class="body">
+        <h3>Valid National ID (the root of trust)</h3>
+        <p>Every applicant is keyed on their NIDA identity. Foreigners need a passport + valid residence permit instead.</p>
+        <div class="metarow"><span class="mb actor">NIDA</span><span class="mb free">Free</span><span class="mb">Prerequisite</span></div>
+        <span class="rlabel">Common rejections</span>
+        <ul class="rej">
+          <li>ID expired, or name spelling on the form ≠ NIDA record → identity mismatch.</li>
+          <li>Applicant under 18 — minors cannot register a business.</li>
+          <li>Foreigner without a valid residence permit / visa class that allows trading.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stepcard">
+      <div class="n">2</div>
+      <div class="body">
+        <h3>Business-name search &amp; reservation</h3>
+        <p>Check the name is available and permissible before committing to it.</p>
+        <div class="metarow"><span class="mb actor">RDB</span><span class="mb free">Free</span><span class="mb">Minutes</span></div>
+        <span class="rlabel">Common rejections</span>
+        <ul class="rej">
+          <li>Name identical or confusingly similar to an existing registered business.</li>
+          <li>Contains restricted words ("Bank", "Insurance", "National", "Rwanda", "University"…) without authorization.</li>
+          <li>Implies a regulated activity the applicant isn't licensed for.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stepcard">
+      <div class="n">3</div>
+      <div class="body">
+        <h3>Business registration → Certificate of Registration</h3>
+        <p>The actual RDB registration. Capture activity, address, owner/shareholders, capital. Certificate is typically issued same-day to ~2 days — <strong>and registration is free</strong>. This is the step everyone <em>thinks</em> is the whole job.</p>
+        <div class="metarow"><span class="mb actor">RDB</span><span class="mb free">Free</span><span class="mb">Same-day–2 days</span></div>
+        <span class="rlabel">Common rejections</span>
+        <ul class="rej">
+          <li>Wrong / mismatched ISIC activity code vs. the business actually described.</li>
+          <li>Address hierarchy (Village → Cell → Sector → District) doesn't resolve.</li>
+          <li>Company path only: shareholding doesn't total 100%, missing directors, missing articles of association.</li>
+          <li>Poor document quality — blurry ID scan, wrong file format.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stepcard">
+      <div class="n">4</div>
+      <div class="body">
+        <h3>TIN issued automatically (+ VAT if over threshold)</h3>
+        <p>RDB and RRA are integrated, so a Tax Identification Number is issued <em>with</em> registration — no separate step. But tax <strong>obligations</strong> start now. VAT registration becomes mandatory above ~RWF&nbsp;20M annual turnover.</p>
+        <div class="metarow"><span class="mb actor">RRA (auto)</span><span class="mb free">Free</span><span class="mb">Automatic</span></div>
+        <span class="rlabel">Where it goes wrong (silent, not a "rejection")</span>
+        <ul class="rej">
+          <li>Owner doesn't realise they must now file declarations — even nil returns — and accrues penalties.</li>
+          <li>Crosses the VAT threshold without registering / acquiring an EBM e-invoicing device.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stepcard tail">
+      <div class="n">5</div>
+      <div class="body">
+        <h3>Trading license (district level) — <em>the first hidden step</em></h3>
+        <p>The RDB certificate does <strong>not</strong> grant permission to operate. A separate annual trading license / tax is paid to the District, on a different channel from the RDB flow.</p>
+        <div class="metarow"><span class="mb actor">District / Sector</span><span class="mb paid">Annual paid tax</span><span class="mb">Days</span></div>
+        <span class="rlabel">Common rejections</span>
+        <ul class="rej">
+          <li>No proof of premises (lease agreement / land title) for the trading address.</li>
+          <li>Location not zoned for the activity (e.g. a bar too close to a school/church).</li>
+          <li>Arrears on a prior year's trading license block renewal.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stepcard tail">
+      <div class="n">6</div>
+      <div class="body">
+        <h3>Sector permit(s) — <em>the big one agents catch</em></h3>
+        <p>For a restaurant: a health/hygiene inspection certificate (and a liquor permit if serving alcohol). Other activities route to other regulators — pharmacy → Rwanda FDA + Pharmacy Council, school → REB/MINEDUC, transport → RURA, tourism/hotel → RDB grading. This is the step most people don't know exists until an inspector arrives.</p>
+        <div class="metarow"><span class="mb actor">Activity-specific regulator</span><span class="mb paid">Varies</span><span class="mb">Days–weeks</span></div>
+        <span class="rlabel">Common rejections</span>
+        <ul class="rej">
+          <li>Starts operating on the strength of the RDB certificate alone — operating illegally until inspected/fined.</li>
+          <li>Applies to the wrong regulator, or fails the premises inspection.</li>
+          <li>Doesn't know the permit was required at all → the single most valuable thing an agent knows.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stepcard tail">
+      <div class="n">7</div>
+      <div class="body">
+        <h3>RSSB + bank account + EBM (operational setup)</h3>
+        <p>Register with RSSB once hiring (social security for employees). Open a business bank account (needs certificate + TIN). Acquire an EBM e-invoicing device if VAT-registered.</p>
+        <div class="metarow"><span class="mb actor">RSSB · Bank · RRA</span><span class="mb paid">Mixed</span><span class="mb">Ongoing</span></div>
+        <span class="rlabel">Where it goes wrong</span>
+        <ul class="rej">
+          <li>Hires staff without registering them with RSSB → liability on inspection.</li>
+          <li>Bank rejects account opening because registered details ≠ ID details (loops back to step 1).</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <h3 style="margin:30px 0 4px;font-size:1.05rem">Rejection failure-points → what the Companion does</h3>
+  <p class="lead" style="margin-bottom:14px">Every rejection above is a feature spec. This is the seed of the dependency-rule dataset (Q4) and the side-panel's warning logic.</p>
+  <table>
+    <thead><tr><th>Failure point</th><th>Where</th><th>Severity</th><th>What the agent side-panel does</th></tr></thead>
+    <tbody>
+      <tr><td>Expired ID / name spelling mismatch</td><td>NIDA</td><td><span class="pill hi">High</span></td><td>Pre-flight ID validity + name-match check before any form is started.</td></tr>
+      <tr><td>Name taken / restricted word</td><td>RDB name search</td><td><span class="pill md">Med</span></td><td>Live availability check + restricted-word flag with suggested alternatives.</td></tr>
+      <tr><td>Wrong ISIC activity code</td><td>RDB form</td><td><span class="pill md">Med</span></td><td>Plain-language activity → suggested ISIC code (e.g. "I sell food" → restaurant code).</td></tr>
+      <tr><td>Incomplete shareholding / directors / articles</td><td>RDB form (company)</td><td><span class="pill md">Med</span></td><td>Structure-aware completeness validator; warns if "company" path was a mistake.</td></tr>
+      <tr><td>No premises proof / zoning conflict</td><td>District license</td><td><span class="pill hi">High</span></td><td>Premises &amp; zoning checklist surfaced before the district step, not after.</td></tr>
+      <tr><td>Unaware a sector permit is required</td><td>Sector regulator</td><td><span class="pill hi">High</span></td><td>Activity → required-permits map; persistent "you're not done — you still need X" banner.</td></tr>
+      <tr><td>Tax / VAT / EBM obligations ignored</td><td>RRA</td><td><span class="pill md">Med</span></td><td>Post-registration obligation reminders tied to the TIN and turnover threshold.</td></tr>
+      <tr><td>Employees not registered</td><td>RSSB</td><td><span class="pill md">Med</span></td><td>Triggered when the agent records that the client intends to hire.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="quote" style="margin-top:24px"><b>The headline insight:</b> the RDB certificate is <strong>necessary but not sufficient</strong>. Steps 5–7 (the violet "hidden tail") are where citizens get stuck, operate illegally, or come back to an agent confused. Irembo/RDB treat step 3 as "done"; the agent's whole value is knowing the tail. <strong>Encode the tail, and you've bottled the agent's expertise.</strong></div>
+</div></section>
+
+<!-- 3C. DATA MODEL -->
+<section><div class="wrap">
+  <h2><span class="num" style="background:var(--green-soft);color:var(--green)">{ }</span>The data model — this deep dive, encoded</h2>
+  <p class="lead">The journey above is now real data, not prose. The design is <strong>artifact-based</strong>: services <em>consume</em> and <em>produce</em> artifacts (national-id, certificate, trading-license…), so the dependency graph, path-finding, cost/time roll-ups, and "what's blocking me" are all <strong>derived</strong> by matching <code>requires</code> ↔ <code>produces</code>. Rules live on each service and carry the mitigation, so the side-panel's warning logic falls straight out of the data.</p>
+
+  <div class="files">
+    <span class="file"><b>data/schema.json</b> — the model (JSON Schema)</span>
+    <span class="file"><b>data/dataset.json</b> — shared catalog + journeys (10 agencies · 21 artifacts · 20 services · 27 rules · 2 journeys)</span>
+  </div>
+
+  <p class="lead" style="margin-bottom:8px">Core entities: <b>agencies</b> · <b>artifacts</b> (graph edges) · <b>services</b> (nodes, with <code>requires</code>/<code>produces</code>/<code>cost</code>/<code>duration</code>/<code>appliesWhen</code>/<code>rules</code>) · <b>journeys</b> (ordered life events, each step flagged <code>hidden</code> for the invisible tail). A sample node:</p>
+  <pre>{
+  "id": "svc.sector-permit-restaurant",
+  "agency": "agency.health-regulator",
+  "appliesWhen": { "var": "activity", "op": "in",
+                   "value": ["restaurant","food","bar","hotel"] },
+  "requires": ["art.certificate-of-registration", "art.premises-proof"],
+  "produces": ["art.health-hygiene-certificate"],
+  "rules": [{
+    "severity": "high",
+    "failureMode": "illegal-operation",
+    "message": "Operates on the RDB certificate alone — illegal until inspected.",
+    "mitigation": "Persistent 'you still need a sector permit' banner."
+  }]
+}</pre>
+
+  <p class="lead" style="margin:18px 0 8px">Because it's data, a tiny engine computes the Phase 0/1 views for any citizen profile. Running it for a below-VAT-threshold restaurant that will hire:</p>
+  <pre>Referential integrity + graph completeness: PASS
+
+=== Open a restaurant — path for (restaurant, hiring, below VAT) ===
+   #0 Decide legal structure            (free,  5-30 min)
+   #1 Verify National ID                (free,  instant)
+   #2 Secure proof of premises          (var,   0-30 days)
+   #3 Business-name reservation         (free,  5-60 min)
+   #4 Business registration (RDB)       (free,  0-2 days)
+   [HIDDEN] #6 Trading license          (var,   1-7 days)
+   [HIDDEN] #7 Health/hygiene permit    (var,   1-4 weeks)
+   [HIDDEN] #8 RSSB employer reg.        (free,  1-3 days)
+   #9 Open business bank account        (var,   1-5 days)
+
+Roll-up: 9 steps | 3 hidden-tail | ~10-75 days | 5 high-severity rules
+Steps pruned for this profile (VAT + EBM, below threshold): 2</pre>
+
+  <div class="open" style="margin-top:16px"><b>What this proves:</b> conditional pruning, hidden-tail detection, cost/time roll-up and rule activation are all <em>derived from the data</em> — zero hard-coded logic. The dataset is tagged <code>"sourceConfidence": "needs-verification"</code> — every fee/threshold marked <code>CONFIRM</code> is what the agent-interview script (Q4) nails down.</div>
+</div></section>
+
+<!-- 3D. SECOND JOURNEY: LAND TRANSFER -->
+<section style="background:#fbfcfe"><div class="wrap">
+  <h2><span class="num" style="background:var(--green-soft);color:var(--green)">2×</span>Second journey — land transfer (the engine generalizes)</h2>
+  <p class="lead">Adding <strong>land transfer</strong> required no new engine code — just a second journey instance in the same catalog. It <strong>reuses</strong> <code>svc.verify-national-id</code> and <code>art.national-id</code> across both journeys (the foundation of a future document vault), and adds RLMUA + Notary as new agencies. Crucially it reveals a <em>different shape</em> of the same problem.</p>
+
+  <div class="grid g2">
+    <div class="card"><span class="tag t-idea">Pattern A · business</span><h3>Hidden tail comes <em>after</em></h3><p>You get the headline RDB certificate early, then discover the trading license + sector permits you still owe. The trap is thinking you're <em>done</em>.</p></div>
+    <div class="card"><span class="tag t-idea">Pattern B · land</span><h3>Hidden work comes <em>before</em></h3><p>Spousal consent, encumbrance/mortgage checks, tax clearance — all must happen <em>before</em> the "apply on Irembo" step everyone thinks is the transfer. The trap is thinking you can <em>start</em>.</p></div>
+  </div>
+  <p class="lead" style="margin-top:14px">Same underlying truth in both: the visible Irembo transaction is a small slice of the real journey. The companion's value is rendering the invisible part — whichever end it sits on.</p>
+
+  <p class="lead" style="margin:18px 0 8px">The engine prices the path <strong>per citizen profile</strong>. Same journey, two sellers:</p>
+  <pre>=== Transfer land — married seller, no mortgage, sole-owned ===
+   Verify National ID            (free)        &lt;- SHARED with business journey
+   Verify land title & ownership (free)
+   [HIDDEN] Encumbrance check     (free)
+   [HIDDEN] Obtain spousal consent (var)       &lt;- THE classic rejection
+   [HIDDEN] Land-tax clearance    (var)
+   Notarize sale agreement       (var)
+   Pay transfer fee              (var)
+   Apply for land transfer (RLMUA)(free)
+   Roll-up: 8/10 steps | 3 hidden | ~6-54 days | 6 high-severity rules
+
+=== Same journey — married, mortgaged, FAMILY land (worst case) ===
+   ...+ [HIDDEN] Mortgage release  (1-4 weeks)
+   ...+ [HIDDEN] Co-owner consent   (1-14 days)
+   Roll-up: 10/10 steps | 5 hidden | ~14-96 days | 8 high-severity rules</pre>
+
+  <div class="quote" style="margin-top:20px"><b>Why this matters for the wedge:</b> two profiles for the <em>same</em> goal differ by 4× in time and two whole steps. A citizen can't price that. An agent prices it from memory — unevenly. The engine prices it identically every time, which is exactly the trust the side-panel sells.</div>
+</div></section>
+
+<!-- 3E. SIDE-PANEL EXTENSION SPEC -->
+<section><div class="wrap">
+  <h2><span class="num" style="background:var(--accent-soft);color:var(--accent)">▣</span>The side-panel extension — Phase 2 (after the web app)</h2>
+  <p class="lead"><em>Re-sequenced to follow the Journey Explorer web app (§7).</em> Once the journey model is proven publicly, this overlay brings it <em>into</em> the agent's workflow: a browser side-panel next to Irembo/RDB/RLMUA that <strong>reads</strong> the page they're on, figures out which step of which journey they're in, and overlays the map + warnings + prefill — driven by the same data. The fragile DOM coupling is pushed out of code into a config file, so a portal change is a data edit, not a release. (Spec already drafted — see below.)</p>
+
+  <div class="files">
+    <span class="file"><b>extension/SPEC.md</b> — full engineering spec (architecture, rule-firing, privacy, MVP milestones)</span>
+    <span class="file"><b>extension/adapters.json</b> — page→service map (6 pages, cross-checked vs dataset.json)</span>
+  </div>
+
+  <div class="extlayout" style="margin-top:18px">
+    <div>
+      <h3 style="margin:4px 0 8px;font-size:1.02rem">Two data files drive everything</h3>
+      <pre>page DOM ──read──►  adapters.json  ──"you are on svc.business-registration"──►
+                                                                  ┌─────────┐
+   profile (local) ───────────────────────────────────────────► │ ENGINE  │
+                                          dataset.json ────────► │ (shared │
+                                       (journeys + rules)         │  w/ Node│
+                                                                  │ validator)
+                                                                  └────┬────┘
+   side-panel  ◄── path · blockers · cost/time · active rules ────────┘</pre>
+      <p class="lead" style="margin:12px 0 6px"><b>Code stays thin.</b> <code>dataset.json</code> = what the journey is. <code>adapters.json</code> = where each step lives on the real portals. The engine is the exact path-finder/rule-evaluator already proven against both journeys; the extension just renders its output.</p>
+
+      <h3 style="margin:20px 0 4px;font-size:1.02rem">Rules fire at three moments (by failureMode)</h3>
+      <div class="timeline">
+        <div class="tl"><div class="when">On-intake</div><div class="what"><b>eligibility</b> rules — ID expired, applicant a minor, missing spousal consent. Red banner that persists until resolved.</div></div>
+        <div class="tl"><div class="when">On-field</div><div class="what"><b>completeness / quality</b> rules — name taken, wrong ISIC code. Inline chip + suggestion as the agent types.</div></div>
+        <div class="tl"><div class="when">Pre-submit</div><div class="what"><b>rejection</b> rules — fired on focus of the real submit button: <em>"2 likely-rejection issues, review first."</em> Advisory, never a hard block.</div></div>
+      </div>
+      <p class="lead" style="margin:12px 0 0"><code>silent-liability</code> &amp; <code>illegal-operation</code> rules don't fire at a moment — they raise a <em>persistent</em> reminder ("you still need a sector permit") that survives across sessions for that client.</p>
+    </div>
+
+    <div>
+      <div class="panelmock">
+        <div class="pm-bar"><b>Irembo Companion</b><span>agent view</span></div>
+        <div class="pm-head"><div class="goal">Open a restaurant</div><div class="prog">Client: Mukamana J. · 4 / 9 steps · ~10–75 days left</div></div>
+        <div class="pm-alert">National ID expires in 12 days — renew before the bank step.</div>
+        <div class="pm-list">
+          <div class="pm-row"><span class="sdot done"></span><div><div class="nm">Decide structure · National ID</div><div class="meta2">NIDA · done</div></div></div>
+          <div class="pm-row"><span class="sdot done"></span><div><div class="nm">Name reservation</div><div class="meta2">RDB · done</div></div></div>
+          <div class="pm-row"><span class="sdot ready"></span><div><div class="nm">Business registration</div><div class="meta2">RDB · free · here now</div></div></div>
+          <div class="pm-row"><span class="sdot blocked"></span><div><div class="nm">Trading license <span class="htag">HIDDEN</span></div><div class="meta2">District · annual</div><div class="needs">needs: premises proof</div></div></div>
+          <div class="pm-row"><span class="sdot blocked"></span><div><div class="nm">Health/hygiene permit <span class="htag">HIDDEN</span></div><div class="meta2">Regulator · 1–4 wks</div><div class="needs">needs: certificate + premises</div></div></div>
+          <div class="pm-row"><span class="sdot na"></span><div><div class="nm">VAT + EBM</div><div class="meta2">not applicable — below threshold</div></div></div>
+        </div>
+        <div class="pm-foot"><span class="pm-btn">Fill from profile</span><span class="pm-btn ghost">Capture doc</span></div>
+      </div>
+      <p class="lead" style="font-size:.78rem;margin-top:8px;text-align:center">Mock — statuses (done / here-now / blocked / n-a), the hidden tail flagged, and the agent always clicks the real submit.</p>
+    </div>
+  </div>
+
+  <div class="open" style="margin-top:18px"><b>The "beside" boundary (hard line):</b> the extension reads the DOM, computes, suggests, and can <em>fill</em> fields — but it <strong>never clicks submit</strong>. Pre-flight checks are advisory warnings before the agent's own click. Needs zero RISA cooperation and keeps the human accountable (Q3). The only government-coupled code is <code>adapters.json</code>; a self-test flags dead selectors so we learn the portal changed before agents do.</div>
+
+  <div class="quote" style="margin-top:16px"><b>And the loop closes:</b> when an agent dismisses a warning, submits, and a step is later rejected, the panel asks them to tag the reason. That stream corrects the <code>CONFIRM</code> fees and flips <code>sourceConfidence</code> from <em>needs-verification</em> to <em>verified</em> — the agents become the sensor network that keeps the rule base honest (Q4).</div>
+</div></section>
+
+<!-- 4. WHY AGENTS -->
+<section><div class="wrap">
+  <h2><span class="num">4</span>Why citizens still go to agents</h2>
+  <p class="lead">Before we "replace" agents, we should respect what they actually provide. Each row is a job-to-be-done — and a column for whether software can take it on.</p>
+
+  <table>
+    <thead><tr><th>Why citizens use an agent</th><th>Real underlying need</th><th>Can a companion absorb it?</th></tr></thead>
+    <tbody>
+      <tr><td>"I don't know what I need"</td><td>Path discovery &amp; sequencing</td><td><span class="pill lo">Yes — core feature</span></td></tr>
+      <tr><td>Forms are confusing / in legalese</td><td>Plain-language guidance, local languages</td><td><span class="pill lo">Yes — AI explainer</span></td></tr>
+      <tr><td>Can't pay online</td><td>Payment access (MoMo, cash)</td><td><span class="pill md">Partly — guide + MoMo, cash still needs a human</span></td></tr>
+      <tr><td>Can't scan/upload documents</td><td>Document capture &amp; quality check</td><td><span class="pill md">Partly — phone camera + AI validation</span></td></tr>
+      <tr><td>No smartphone / low literacy</td><td>Device + digital literacy access</td><td><span class="pill hi">No — agent/USSD/IVR still needed</span></td></tr>
+      <tr><td>"I'm afraid I'll make a mistake"</td><td>Trust, error-proofing, accountability</td><td><span class="pill md">Partly — pre-submission validation builds trust over time</span></td></tr>
+      <tr><td>"Follow up for me"</td><td>Status tracking &amp; chasing</td><td><span class="pill lo">Yes — unified tracker + alerts</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="quote">Strategic read: the companion shouldn't fight agents — it should <strong>upgrade</strong> them. Give the agent the same journey map as a power tool, and turn the irreducible-human needs (cash, devices, literacy) into the agent's real value. The companion eats the <em>knowledge</em> monopoly, not the human role.</div>
+</div></section>
+
+<!-- 5. AI COMPANION CONCEPT -->
+<section><div class="wrap">
+  <h2><span class="num">5</span>The AI Companion — what it actually is</h2>
+  <p class="lead">Not a chatbot bolted onto a portal. A <strong>journey orchestration layer</strong> with a conversational + visual front end.</p>
+
+  <div class="grid g2">
+    <div class="card"><span class="tag t-idea">Feature</span><h3>Goal → Path</h3><p>Citizen states a life goal ("I want to open a salon", "marry in August"). Companion returns the full ordered path with prerequisites, costs, durations, and which agency each touches.</p></div>
+    <div class="card"><span class="tag t-idea">Feature</span><h3>Visual journey map</h3><p>The graph from §3, personalized: green = done, blue = ready now, grey = blocked-until. The citizen sees "what to expect when" at a glance.</p></div>
+    <div class="card"><span class="tag t-idea">Feature</span><h3>Pre-flight eligibility</h3><p>Before any payment: "Your ID expires in 12 days — renew first or this will be rejected." Catches failure <em>before</em> money and time are spent.</p></div>
+    <div class="card"><span class="tag t-idea">Feature</span><h3>Unified status tracker</h3><p>One timeline across all agencies. Push/SMS when a step unblocks the next. Answers "where am I overall?"</p></div>
+    <div class="card"><span class="tag t-idea">Feature</span><h3>Document co-pilot</h3><p>Camera capture + on-device quality/format check + auto-fill of repeated fields (name, ID, address) across the whole chain.</p></div>
+    <div class="card"><span class="tag t-idea">Feature</span><h3>Multilingual &amp; voice</h3><p>Kinyarwanda-first, voice in/out, USSD/IVR fallback for non-smartphone citizens. Meets people where literacy and devices are.</p></div>
+  </div>
+
+  <div class="open">
+    <b>Provocation (v0.2):</b> In an agent-first world the killer surface isn't a citizen app — it's a <em>side-panel beside Irembo</em> showing the agent "this client also needs X, and their ID expires in 12 days." Same journey engine, but the first user is the human already doing the work. Zero RISA integration required.
+  </div>
+</div></section>
+
+<!-- 6. BACKEND GAPS -->
+<section><div class="wrap">
+  <h2><span class="num">6</span>Backend &amp; engine gaps (why this is hard)</h2>
+  <p class="lead">The visible UX problems are symptoms. Underneath, the architecture is likely transaction-centric with weak cross-agency orchestration. Honest list of what's probably missing.</p>
+
+  <div class="grid g2">
+    <div class="card"><span class="tag t-gap">Gap</span><h3>No service-dependency model</h3><p>Prerequisites live in policy docs and agents' heads, not as queryable data. Nothing to path-find over.</p></div>
+    <div class="card"><span class="tag t-gap">Gap</span><h3>No orchestration / saga engine</h3><p>Each service is fire-and-forget. Nothing coordinates a multi-step, multi-agency workflow or handles partial failure/rollback.</p></div>
+    <div class="card"><span class="tag t-gap">Gap</span><h3>Fragmented identity &amp; status</h3><p>Status lives per-agency (NIDA, RDB, RRA, RLMUA, RNP). No unified citizen timeline / event bus.</p></div>
+    <div class="card"><span class="tag t-gap">Gap</span><h3>No eligibility/rules engine</h3><p>Rules (age, validity, prior-debt, residency) aren't centralized, so pre-validation isn't possible and rejections happen late.</p></div>
+    <div class="card"><span class="tag t-gap">Gap</span><h3>Document reuse</h3><p>The same birth cert / ID is re-uploaded per service. No citizen document vault with consented reuse.</p></div>
+    <div class="card"><span class="tag t-gap">Gap</span><h3>Integration surface</h3><p>Companion needs read APIs (status, eligibility, catalog) the platform may not expose. Likely needs an API gateway / event layer.</p></div>
+  </div>
+
+  <div class="quote">Architecture bet: introduce a <strong>Journey Service</strong> — a graph of services + a rules engine + an event subscription to each agency. The companion is just the friendliest client of that service. The same engine could power the agent console and the official portal too.</div>
+</div></section>
+
+<!-- 7. PHASING -->
+<section><div class="wrap">
+  <h2><span class="num">7</span>How it rolls out — web app first, beside Irembo</h2>
+  <p class="lead">Re-sequenced (v0.7): lead with a standalone <strong>web app</strong>, not the extension. It needs no install, no DOM coupling, and serves citizens <em>and</em> agents from day one. The side-panel becomes a later overlay on the same proven engine. Nothing here requires an official Irembo integration.</p>
+
+  <table>
+    <thead><tr><th>Phase</th><th>For whom</th><th>What ships</th><th>How it stays "beside"</th><th>Risk</th></tr></thead>
+    <tbody>
+      <tr><td><b>1 · Journey Explorer</b> <span class="pill lo">now</span></td><td>Citizens + agents</td><td>Public web app: pick a goal → answer a few questions → see your personalized visual journey with the hidden steps, cost/time, warnings and a "what to bring" list. (Wireframed &amp; functional — see <code>wireframes.html</code>.)</td><td>Standalone; reads nothing from Irembo, deep-links out to it</td><td><span class="pill lo">Low</span></td></tr>
+      <tr><td><b>2 · Side-panel</b></td><td>Agents</td><td>Browser side-panel overlaying Irembo: the same journey for the client in front of them, plus rejection-risk warnings and prefill of repeated fields.</td><td>Extension reads the page; agent still clicks &amp; submits (human-in-loop)</td><td><span class="pill lo">Low</span></td></tr>
+      <tr><td><b>3 · Tracker</b></td><td>Citizens + agents</td><td>Accounts + a unified status timeline across agencies; alerts when a step unblocks the next.</td><td>Status from the user's own sessions, not a backdoor API</td><td><span class="pill md">Med</span></td></tr>
+      <tr><td><b>4 · Citizen channel</b></td><td>Citizens</td><td>Kinyarwanda voice + USSD/IVR + WhatsApp. The agent still bridges cash/devices; everyone else self-serves the same engine.</td><td>Conversational front-end, deep-links into Irembo</td><td><span class="pill md">Med</span></td></tr>
+      <tr><td><b>5 · Hand-off to gov</b></td><td>RISA / Irembo</td><td>Proven engine + dependency-rule dataset offered for official adoption / funding as national infrastructure.</td><td>Becomes "with" once it has earned trust</td><td><span class="pill hi">High</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="open" style="margin-top:14px">
+    <b>Concrete first build:</b> the <strong>Journey Explorer web app</strong> — a goal picker, a short adaptive questionnaire, and a computed visual journey. Already prototyped in <code>wireframes.html</code>, running the exact <code>dataset.json</code> engine (same numbers as the validator). Zero RISA cooperation, no extension-install friction, instantly shareable by link.
+  </div>
+</div></section>
+
+<!-- 8. OPEN QUESTIONS -->
+<section><div class="wrap">
+  <h2><span class="num">8</span>Decisions locked &amp; tensions to manage</h2>
+  <p class="lead">v0.2 settles the six open questions. The decisions are coherent, but two pairs pull against each other — naming them keeps us honest.</p>
+
+  <div class="grid g2">
+    <div class="card"><span class="tag t-win">Locked</span><h3>Beside, not with</h3><p>Independent companion — overlay / deep-link, no RISA integration in v1. Faster to ship, no permission gate.</p></div>
+    <div class="card"><span class="tag t-win">Locked</span><h3>Agent tool first</h3><p>Few, tech-comfortable, monetized, feel rejection pain. The beachhead before direct-to-citizen.</p></div>
+    <div class="card"><span class="tag t-win">Locked</span><h3>Human-in-the-loop</h3><p>AI proposes the path &amp; pre-fills; the agent reviews and submits. Trust is earned before any autonomy.</p></div>
+    <div class="card"><span class="tag t-win">Locked</span><h3>Real dependency rules</h3><p>We source authoritative rules (not reverse-engineer guesses) — via research + institutional relationships.</p></div>
+    <div class="card"><span class="tag t-win">Locked</span><h3>Kinyarwanda + USSD/IVR essential</h3><p>Non-negotiable access. In v1 the agent is the human bridge; v3 brings voice/USSD direct to citizens.</p></div>
+    <div class="card"><span class="tag t-win">Locked</span><h3>Free public good</h3><p>Free to citizens. Realistically grant/donor-funded until proven enough for government adoption.</p></div>
+  </div>
+
+  <div class="quote" style="margin-top:22px"><b>Tension 1 — "beside" vs. "real rules" + "gov-funded":</b> if we're not official, why would gov give us authoritative rules or money? Resolution: <strong>technically beside, institutionally with</strong> — cultivate RISA/agency relationships for the rule data and an eventual adoption path (Phase 4), while staying independent in the stack.</div>
+  <div class="quote"><b>Tension 2 — "agent tool" vs. "free public good":</b> agents are the one segment that would happily <em>pay</em>. Resolution: keep it free to citizens; the agent tool is the funded distribution &amp; proving ground (grant-backed), not a revenue play.</div>
+
+  <p class="lead" style="margin-top:22px">Next moves: (a) pick <strong>one</strong> life event — I'll fully map its real dependency graph + the exact rejection reasons agents hit; (b) spec the Phase-1 <strong>side-panel extension</strong> (what it reads off the Irembo page, what it overlays); (c) draft the agent-interview script to source the real rules. Say which and I'll deepen this file.</p>
+</div></section>
+
+<footer><div class="wrap">
+  Irembo Companion — brainstorm v0.1 · This is a thinking document, not a spec. Everything is a hypothesis to challenge.
+</div></footer>
+
+</body>
+</html>

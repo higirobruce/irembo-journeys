@@ -1,0 +1,594 @@
+{
+  "version": "0.4.0",
+  "updatedAt": "2026-06-05",
+  "sourceConfidence": "needs-verification",
+  "notes": "Shared catalog + two journeys (business registration, land transfer). Both reuse agency.nida/rra/self/bank, art.national-id and svc.verify-national-id — demonstrating cross-journey reuse. Structure & rejection logic are sound; every fee/threshold/regulator-name marked CONFIRM is DRAFT and must be verified via official sources or agent interviews (brainstorm.html Q4) before production use.",
+
+  "agencies": [
+    { "id": "agency.nida", "name": "NIDA", "fullName": "National Identification Agency", "type": "national", "notes": "Root of citizen identity. Shared across all journeys." },
+    { "id": "agency.rdb", "name": "RDB", "fullName": "Rwanda Development Board", "type": "national", "notes": "Company/business registration; integrated with RRA for TIN." },
+    { "id": "agency.rra", "name": "RRA", "fullName": "Rwanda Revenue Authority", "type": "national" },
+    { "id": "agency.district", "name": "District", "fullName": "District / Sector local government", "type": "local-government", "notes": "Issues the annual trading license." },
+    { "id": "agency.health-regulator", "name": "Health Regulator", "fullName": "Food/health hygiene authority (confirm exact body)", "type": "sector-regulator" },
+    { "id": "agency.rssb", "name": "RSSB", "fullName": "Rwanda Social Security Board", "type": "national" },
+    { "id": "agency.bank", "name": "Bank", "fullName": "Commercial bank", "type": "financial" },
+    { "id": "agency.rlmua", "name": "RLMUA", "fullName": "Rwanda Land Management and Use Authority", "type": "national", "notes": "Land titles, register, transfers (front-door via Irembo)." },
+    { "id": "agency.notary", "name": "Notary", "fullName": "Sector / private notary", "type": "external", "notes": "Authenticates land sale agreements & consents." },
+    { "id": "agency.self", "name": "Applicant", "fullName": "Citizen / applicant decision", "type": "self" }
+  ],
+
+  "artifacts": [
+    { "id": "art.structure-decision", "name": "Legal structure decision", "description": "Sole proprietorship/enterprise vs company (Ltd).", "issuedBy": "agency.self", "kind": "decision" },
+    { "id": "art.national-id", "name": "Valid National ID", "description": "NIDA identity; foreigners substitute a valid residence permit. SHARED across journeys.", "issuedBy": "agency.nida", "kind": "identity", "expirable": true, "reusable": true },
+    { "id": "art.name-reservation", "name": "Reserved business name", "description": "Approved, available business name.", "issuedBy": "agency.rdb", "kind": "registration" },
+    { "id": "art.certificate-of-registration", "name": "Certificate of Registration", "description": "The RDB registration certificate. Necessary but NOT sufficient to operate.", "issuedBy": "agency.rdb", "kind": "registration", "reusable": true },
+    { "id": "art.tin", "name": "Tax Identification Number (TIN)", "description": "Issued automatically with RDB registration.", "issuedBy": "agency.rra", "kind": "tax-status", "reusable": true },
+    { "id": "art.vat-registration", "name": "VAT registration", "description": "Mandatory above the turnover threshold.", "issuedBy": "agency.rra", "kind": "tax-status" },
+    { "id": "art.premises-proof", "name": "Proof of premises", "description": "Lease agreement or land title for the trading address.", "issuedBy": "agency.self", "kind": "document", "reusable": true },
+    { "id": "art.trading-license", "name": "Trading license", "description": "Annual district-level license/tax granting permission to operate.", "issuedBy": "agency.district", "kind": "license", "expirable": true },
+    { "id": "art.health-hygiene-certificate", "name": "Health/hygiene certificate", "description": "Sector permit for food service; other activities route to other regulators.", "issuedBy": "agency.health-regulator", "kind": "permit", "expirable": true },
+    { "id": "art.rssb-registration", "name": "RSSB employer registration", "description": "Required once the business hires staff.", "issuedBy": "agency.rssb", "kind": "registration" },
+    { "id": "art.business-bank-account", "name": "Business bank account", "issuedBy": "agency.bank", "kind": "financial" },
+    { "id": "art.ebm-device", "name": "EBM e-invoicing device", "description": "Electronic billing machine, required for VAT-registered businesses.", "issuedBy": "agency.rra", "kind": "tax-status" },
+
+    { "id": "art.land-title", "name": "Existing land title (UPI)", "description": "The seller's registered title / Unique Parcel Identifier.", "issuedBy": "agency.rlmua", "kind": "document", "reusable": true },
+    { "id": "art.encumbrance-clearance", "name": "Encumbrance clearance", "description": "Confirmation the parcel is free of mortgage, caveat or dispute.", "issuedBy": "agency.rlmua", "kind": "document" },
+    { "id": "art.mortgage-release", "name": "Mortgage release / bank consent", "description": "Discharge or consent from the lender when the parcel is mortgaged.", "issuedBy": "agency.bank", "kind": "document" },
+    { "id": "art.spousal-consent", "name": "Spousal consent", "description": "Consent of the seller's spouse — required under community-of-property marriage.", "issuedBy": "agency.notary", "kind": "document" },
+    { "id": "art.coowner-consent", "name": "Co-owner / family consent", "description": "Consent of all co-owners or family members for co-owned or family land.", "issuedBy": "agency.notary", "kind": "document" },
+    { "id": "art.land-tax-clearance", "name": "Land lease-fee / property-tax clearance", "description": "Proof outstanding land lease fees and property tax are paid.", "issuedBy": "agency.rra", "kind": "tax-status" },
+    { "id": "art.sale-agreement", "name": "Notarized sale agreement", "description": "Authenticated contract of sale between the parties.", "issuedBy": "agency.notary", "kind": "document" },
+    { "id": "art.transfer-fee-payment", "name": "Transfer fee payment", "description": "Proof of payment of the land transfer / registration fee.", "issuedBy": "agency.rra", "kind": "financial" },
+    { "id": "art.new-land-title", "name": "New land title (buyer)", "description": "Updated register entry / title issued in the buyer's name.", "issuedBy": "agency.rlmua", "kind": "document" }
+  ],
+
+  "services": [
+    {
+      "id": "svc.choose-structure",
+      "name": "Decide legal structure",
+      "description": "Sole proprietorship/enterprise vs company (Ltd). Silently changes every later step.",
+      "agency": "agency.self",
+      "channel": "offline-decision",
+      "requires": [],
+      "produces": ["art.structure-decision"],
+      "cost": { "model": "free" },
+      "duration": { "unit": "minutes", "min": 5, "max": 30 },
+      "rules": [
+        {
+          "id": "rule.structure-mismatch",
+          "kind": "eligibility",
+          "severity": "medium",
+          "failureMode": "rework",
+          "message": "Choosing 'company' when an enterprise was intended triggers requests for articles of association and directors the applicant doesn't have; choosing 'enterprise' for a multi-partner venture forces a later re-registration.",
+          "mitigation": "Ask intent (one owner vs partners, raising capital?) and recommend the structure; warn before committing."
+        }
+      ]
+    },
+    {
+      "id": "svc.verify-national-id",
+      "name": "Verify National ID validity",
+      "description": "Confirm the applicant's NIDA identity is valid and details match before any form is filled. SHARED across journeys; in land transfer it covers BOTH parties.",
+      "agency": "agency.nida",
+      "channel": "online-irembo",
+      "requires": [],
+      "produces": ["art.national-id"],
+      "cost": { "model": "free" },
+      "duration": { "unit": "instant" },
+      "rules": [
+        {
+          "id": "rule.id-expired",
+          "kind": "eligibility",
+          "severity": "high",
+          "failureMode": "rejection",
+          "message": "National ID expired, or name spelling on the form does not match the NIDA record.",
+          "mitigation": "Pre-flight ID validity + name-match check; block the journey until resolved."
+        },
+        {
+          "id": "rule.minor",
+          "kind": "eligibility",
+          "severity": "high",
+          "failureMode": "rejection",
+          "when": { "var": "applicantAge", "op": "lt", "value": 18 },
+          "message": "Applicant is a minor or legally incapacitated and cannot transact without a guardian.",
+          "mitigation": "Detect age from ID; explain the constraint and the guardian route up front."
+        },
+        {
+          "id": "rule.foreigner-status",
+          "kind": "eligibility",
+          "severity": "high",
+          "failureMode": "rejection",
+          "when": { "var": "isForeigner", "op": "eq", "value": true },
+          "message": "Foreign applicant lacks the status this transaction requires (residence permit to trade; foreigners may generally hold land only on leasehold).",
+          "mitigation": "Branch to the correct non-citizen prerequisites for the journey."
+        }
+      ]
+    },
+    {
+      "id": "svc.provide-premises-proof",
+      "name": "Secure proof of premises",
+      "description": "Citizen-supplied input: a lease agreement or land title for the trading address. Not a government service, but a prerequisite the agent must collect early — it gates two later steps.",
+      "agency": "agency.self",
+      "channel": "offline-decision",
+      "requires": [],
+      "produces": ["art.premises-proof"],
+      "cost": { "model": "variable", "note": "Rent/lease cost — outside the registration system." },
+      "duration": { "unit": "days", "min": 0, "max": 30 },
+      "rules": [
+        {
+          "id": "rule.no-lease-ready",
+          "kind": "external-dependency",
+          "severity": "high",
+          "failureMode": "rework",
+          "message": "Applicant reaches the trading-license / sector-permit steps without a lease or title in hand, and stalls.",
+          "mitigation": "Collect premises proof at intake; flag it as a blocker for steps 6-7 before they are attempted."
+        }
+      ]
+    },
+    {
+      "id": "svc.name-reservation",
+      "name": "Business-name search & reservation",
+      "agency": "agency.rdb",
+      "channel": "online-rdb",
+      "requires": ["art.national-id"],
+      "produces": ["art.name-reservation"],
+      "cost": { "model": "free" },
+      "duration": { "unit": "minutes", "min": 5, "max": 60 },
+      "rules": [
+        {
+          "id": "rule.name-taken",
+          "kind": "completeness",
+          "severity": "medium",
+          "failureMode": "rejection",
+          "message": "Name is identical/confusingly similar to an existing business, uses a restricted word ('Bank', 'National', 'Rwanda', 'University'...), or implies a regulated activity.",
+          "mitigation": "Live availability check + restricted-word flag with suggested alternatives before submit."
+        }
+      ]
+    },
+    {
+      "id": "svc.business-registration",
+      "name": "Business registration (RDB)",
+      "description": "The actual RDB registration. Issues the certificate AND a TIN. Registration is free. This is what people THINK is the whole job (step 3 of 8).",
+      "agency": "agency.rdb",
+      "channel": "online-rdb",
+      "requires": ["art.national-id", "art.name-reservation", "art.structure-decision"],
+      "produces": ["art.certificate-of-registration", "art.tin"],
+      "cost": { "model": "free" },
+      "duration": { "unit": "days", "min": 0, "max": 2 },
+      "rules": [
+        {
+          "id": "rule.wrong-isic",
+          "kind": "completeness",
+          "severity": "medium",
+          "failureMode": "rework",
+          "message": "Wrong/mismatched ISIC activity code vs. the business actually described.",
+          "mitigation": "Plain-language activity -> suggested ISIC code (e.g. 'I sell food' -> restaurant code)."
+        },
+        {
+          "id": "rule.address-hierarchy",
+          "kind": "completeness",
+          "severity": "medium",
+          "failureMode": "rejection",
+          "message": "Address hierarchy (Village -> Cell -> Sector -> District) does not resolve.",
+          "mitigation": "Cascading address picker validated against the administrative gazetteer."
+        },
+        {
+          "id": "rule.company-incomplete",
+          "kind": "completeness",
+          "severity": "medium",
+          "failureMode": "rejection",
+          "when": { "var": "legalStructure", "op": "eq", "value": "company" },
+          "message": "Company path: shareholding doesn't total 100%, missing directors, or missing articles of association.",
+          "mitigation": "Structure-aware completeness validator; offer standard articles template."
+        },
+        {
+          "id": "rule.doc-quality",
+          "kind": "quality",
+          "severity": "low",
+          "failureMode": "rejection",
+          "message": "Poor document quality — blurry ID scan, wrong file format.",
+          "mitigation": "On-device capture with auto quality/format check."
+        }
+      ]
+    },
+    {
+      "id": "svc.vat-registration",
+      "name": "VAT registration",
+      "agency": "agency.rra",
+      "channel": "online-rra",
+      "optional": true,
+      "appliesWhen": { "var": "annualTurnoverRWF", "op": "gte", "value": 20000000 },
+      "requires": ["art.tin"],
+      "produces": ["art.vat-registration"],
+      "cost": { "model": "free" },
+      "duration": { "unit": "days", "min": 1, "max": 5 },
+      "rules": [
+        {
+          "id": "rule.vat-threshold-missed",
+          "kind": "compliance",
+          "severity": "medium",
+          "failureMode": "silent-liability",
+          "message": "Crosses the ~RWF 20M turnover threshold (CONFIRM) without registering for VAT or acquiring an EBM device.",
+          "mitigation": "Threshold reminder tied to declared/estimated turnover."
+        }
+      ]
+    },
+    {
+      "id": "svc.trading-license",
+      "name": "Trading license (district)",
+      "description": "HIDDEN TAIL. The RDB certificate does not grant permission to operate; a separate annual district license/tax is required, on a different channel.",
+      "agency": "agency.district",
+      "channel": "in-person-district",
+      "requires": ["art.certificate-of-registration", "art.premises-proof"],
+      "produces": ["art.trading-license"],
+      "cost": { "model": "variable", "currency": "RWF", "recurrence": "annual", "note": "Trading-license tax varies by activity/turnover band — CONFIRM bands." },
+      "duration": { "unit": "days", "min": 1, "max": 7 },
+      "rules": [
+        {
+          "id": "rule.no-premises",
+          "kind": "external-dependency",
+          "severity": "high",
+          "failureMode": "rejection",
+          "message": "No proof of premises (lease agreement / land title) for the trading address.",
+          "mitigation": "Premises checklist surfaced before the district step, not after."
+        },
+        {
+          "id": "rule.zoning",
+          "kind": "compliance",
+          "severity": "high",
+          "failureMode": "rejection",
+          "message": "Location not zoned for the activity (e.g. a bar too close to a school/church).",
+          "mitigation": "Activity + location zoning check; flag conflicts early."
+        },
+        {
+          "id": "rule.license-arrears",
+          "kind": "compliance",
+          "severity": "medium",
+          "failureMode": "rejection",
+          "message": "Arrears on a prior year's trading license block renewal.",
+          "mitigation": "Surface outstanding balances tied to the TIN."
+        }
+      ]
+    },
+    {
+      "id": "svc.sector-permit-restaurant",
+      "name": "Health/hygiene permit (restaurant)",
+      "description": "HIDDEN TAIL — the big one agents catch. The activity determines the regulator; most people don't know this step exists until an inspector arrives.",
+      "agency": "agency.health-regulator",
+      "channel": "in-person-regulator",
+      "optional": true,
+      "appliesWhen": { "var": "activity", "op": "in", "value": ["restaurant", "food", "bar", "hotel"] },
+      "requires": ["art.certificate-of-registration", "art.premises-proof"],
+      "produces": ["art.health-hygiene-certificate"],
+      "cost": { "model": "variable", "note": "Varies by regulator — CONFIRM." },
+      "duration": { "unit": "weeks", "min": 1, "max": 4 },
+      "rules": [
+        {
+          "id": "rule.operating-without-permit",
+          "kind": "compliance",
+          "severity": "high",
+          "failureMode": "illegal-operation",
+          "message": "Starts operating on the strength of the RDB certificate alone — operating illegally until inspected/fined.",
+          "mitigation": "Persistent 'you are NOT done — you still need a sector permit' banner until the artifact is obtained."
+        },
+        {
+          "id": "rule.wrong-regulator",
+          "kind": "external-dependency",
+          "severity": "medium",
+          "failureMode": "rework",
+          "message": "Applies to the wrong regulator, or fails the premises inspection.",
+          "mitigation": "Activity -> correct-regulator map + inspection-readiness checklist."
+        }
+      ]
+    },
+    {
+      "id": "svc.rssb-registration",
+      "name": "RSSB employer registration",
+      "agency": "agency.rssb",
+      "channel": "online-irembo",
+      "optional": true,
+      "appliesWhen": { "var": "willHire", "op": "eq", "value": true },
+      "requires": ["art.certificate-of-registration"],
+      "produces": ["art.rssb-registration"],
+      "cost": { "model": "free" },
+      "duration": { "unit": "days", "min": 1, "max": 3 },
+      "rules": [
+        {
+          "id": "rule.unregistered-staff",
+          "kind": "compliance",
+          "severity": "medium",
+          "failureMode": "silent-liability",
+          "message": "Hires staff without registering them with RSSB — liability on inspection.",
+          "mitigation": "Triggered when the agent records the client intends to hire."
+        }
+      ]
+    },
+    {
+      "id": "svc.business-bank-account",
+      "name": "Open business bank account",
+      "agency": "agency.bank",
+      "channel": "bank",
+      "optional": true,
+      "requires": ["art.certificate-of-registration", "art.tin", "art.national-id"],
+      "produces": ["art.business-bank-account"],
+      "cost": { "model": "variable", "note": "Bank-dependent." },
+      "duration": { "unit": "days", "min": 1, "max": 5 },
+      "rules": [
+        {
+          "id": "rule.bank-detail-mismatch",
+          "kind": "completeness",
+          "severity": "medium",
+          "failureMode": "rejection",
+          "message": "Bank rejects account opening because registered business details do not match ID details (loops back to identity).",
+          "mitigation": "Cross-check registered name vs. NIDA name before the bank visit."
+        }
+      ]
+    },
+    {
+      "id": "svc.acquire-ebm",
+      "name": "Acquire EBM e-invoicing device",
+      "agency": "agency.rra",
+      "channel": "online-rra",
+      "optional": true,
+      "appliesWhen": { "var": "annualTurnoverRWF", "op": "gte", "value": 20000000 },
+      "requires": ["art.vat-registration"],
+      "produces": ["art.ebm-device"],
+      "cost": { "model": "variable", "note": "CONFIRM." },
+      "duration": { "unit": "days", "min": 1, "max": 7 },
+      "rules": []
+    },
+
+    {
+      "id": "svc.verify-land-title",
+      "name": "Verify land title & ownership",
+      "description": "Confirm the seller is the registered owner of the parcel (UPI) before anything else.",
+      "agency": "agency.rlmua",
+      "channel": "online-irembo",
+      "requires": ["art.national-id"],
+      "produces": ["art.land-title"],
+      "cost": { "model": "free" },
+      "duration": { "unit": "minutes", "min": 5, "max": 60 },
+      "rules": [
+        {
+          "id": "rule.not-registered-owner",
+          "kind": "eligibility",
+          "severity": "high",
+          "failureMode": "rejection",
+          "message": "The title is not in the seller's name, or parcel/UPI details don't match the register.",
+          "mitigation": "Look up the UPI and confirm the registered owner == the seller before any payment."
+        }
+      ]
+    },
+    {
+      "id": "svc.encumbrance-check",
+      "name": "Encumbrance / dispute check",
+      "description": "HIDDEN. Confirm the parcel carries no mortgage, caveat, or dispute. Buyers routinely skip this and discover the encumbrance after paying.",
+      "agency": "agency.rlmua",
+      "channel": "online-irembo",
+      "requires": ["art.land-title"],
+      "produces": ["art.encumbrance-clearance"],
+      "cost": { "model": "free" },
+      "duration": { "unit": "days", "min": 0, "max": 3 },
+      "rules": [
+        {
+          "id": "rule.encumbered-parcel",
+          "kind": "external-dependency",
+          "severity": "high",
+          "failureMode": "rejection",
+          "message": "Parcel is mortgaged, under caveat, or in dispute — transfer is blocked until cleared.",
+          "mitigation": "Run the encumbrance check up front; if mortgaged, route to the mortgage-release step."
+        }
+      ]
+    },
+    {
+      "id": "svc.mortgage-release",
+      "name": "Mortgage release / lender consent",
+      "description": "HIDDEN, conditional. If the parcel is mortgaged, the lender must discharge or consent before transfer.",
+      "agency": "agency.bank",
+      "channel": "bank",
+      "optional": true,
+      "appliesWhen": { "var": "hasMortgage", "op": "eq", "value": true },
+      "requires": ["art.land-title"],
+      "produces": ["art.mortgage-release"],
+      "cost": { "model": "variable", "note": "Outstanding loan balance must be settled — CONFIRM bank process." },
+      "duration": { "unit": "weeks", "min": 1, "max": 4 },
+      "rules": [
+        {
+          "id": "rule.outstanding-loan",
+          "kind": "external-dependency",
+          "severity": "high",
+          "failureMode": "rejection",
+          "message": "Outstanding loan not settled / no written lender consent.",
+          "mitigation": "Surface the mortgage on the encumbrance check and start lender consent early."
+        }
+      ]
+    },
+    {
+      "id": "svc.obtain-spousal-consent",
+      "name": "Obtain spousal consent",
+      "description": "HIDDEN, conditional — THE classic land-transfer rejection. Under community-of-property marriage the spouse must consent to the sale.",
+      "agency": "agency.notary",
+      "channel": "in-person-regulator",
+      "optional": true,
+      "appliesWhen": { "var": "sellerMarried", "op": "eq", "value": true },
+      "requires": ["art.national-id", "art.land-title"],
+      "produces": ["art.spousal-consent"],
+      "cost": { "model": "variable", "note": "Notary authentication fee — CONFIRM." },
+      "duration": { "unit": "days", "min": 1, "max": 7 },
+      "rules": [
+        {
+          "id": "rule.missing-spousal-consent",
+          "kind": "compliance",
+          "severity": "high",
+          "failureMode": "rejection",
+          "message": "Married seller (community of property) sells without the spouse's consent — the single most common land-transfer rejection.",
+          "mitigation": "Detect marital regime at intake; require spousal consent before the sale agreement is notarized."
+        }
+      ]
+    },
+    {
+      "id": "svc.obtain-coowner-consent",
+      "name": "Obtain co-owner / family consent",
+      "description": "HIDDEN, conditional. Co-owned or family land requires the consent of all co-owners / relevant family members.",
+      "agency": "agency.notary",
+      "channel": "in-person-regulator",
+      "optional": true,
+      "appliesWhen": { "var": "isCoOwnedOrFamilyLand", "op": "eq", "value": true },
+      "requires": ["art.land-title"],
+      "produces": ["art.coowner-consent"],
+      "cost": { "model": "variable", "note": "CONFIRM." },
+      "duration": { "unit": "days", "min": 1, "max": 14 },
+      "rules": [
+        {
+          "id": "rule.missing-coowner-consent",
+          "kind": "compliance",
+          "severity": "high",
+          "failureMode": "rejection",
+          "message": "One or more co-owners / family members have not consented to the sale.",
+          "mitigation": "Enumerate co-owners from the title; collect every consent before notarization."
+        }
+      ]
+    },
+    {
+      "id": "svc.land-tax-clearance",
+      "name": "Land lease-fee / property-tax clearance",
+      "description": "HIDDEN. Outstanding land lease fees and property tax must be cleared before transfer — a frequent surprise.",
+      "agency": "agency.rra",
+      "channel": "online-rra",
+      "requires": ["art.land-title"],
+      "produces": ["art.land-tax-clearance"],
+      "cost": { "model": "variable", "recurrence": "annual", "note": "Arrears depend on parcel/history — CONFIRM." },
+      "duration": { "unit": "days", "min": 1, "max": 7 },
+      "rules": [
+        {
+          "id": "rule.tax-arrears",
+          "kind": "compliance",
+          "severity": "medium",
+          "failureMode": "rejection",
+          "message": "Unpaid land lease fees / property tax arrears block the transfer.",
+          "mitigation": "Pull outstanding balances tied to the parcel and settle before applying."
+        }
+      ]
+    },
+    {
+      "id": "svc.notarize-sale-agreement",
+      "name": "Notarize the sale agreement",
+      "description": "Authenticate the contract of sale. Conditional consents (spousal / co-owner) must be attached when applicable.",
+      "agency": "agency.notary",
+      "channel": "in-person-regulator",
+      "requires": ["art.national-id", "art.land-title", "art.encumbrance-clearance"],
+      "produces": ["art.sale-agreement"],
+      "cost": { "model": "variable", "note": "Notary fee — CONFIRM." },
+      "duration": { "unit": "days", "min": 1, "max": 5 },
+      "rules": [
+        {
+          "id": "rule.unauthenticated-agreement",
+          "kind": "completeness",
+          "severity": "high",
+          "failureMode": "rejection",
+          "message": "Sale agreement is not properly authenticated, or required consents are not attached.",
+          "mitigation": "Block notarization until all applicable consents (spousal/co-owner) are present."
+        }
+      ]
+    },
+    {
+      "id": "svc.pay-transfer-fee",
+      "name": "Pay land transfer fee",
+      "agency": "agency.rra",
+      "channel": "online-irembo",
+      "requires": ["art.sale-agreement"],
+      "produces": ["art.transfer-fee-payment"],
+      "cost": { "model": "variable", "note": "Transfer / registration fee — CONFIRM amount & whether a percentage applies." },
+      "duration": { "unit": "days", "min": 0, "max": 2 },
+      "rules": [
+        {
+          "id": "rule.wrong-transfer-fee",
+          "kind": "completeness",
+          "severity": "medium",
+          "failureMode": "rework",
+          "message": "Incorrect fee paid / payment not matched to the application.",
+          "mitigation": "Compute the expected fee from parcel value and pre-fill the payment reference."
+        }
+      ]
+    },
+    {
+      "id": "svc.apply-land-transfer",
+      "name": "Apply for land transfer (RLMUA / Irembo)",
+      "description": "The step everyone THINKS is 'the transfer'. Submits the agreement, IDs, clearances and payment; RLMUA updates the register and issues the new title.",
+      "agency": "agency.rlmua",
+      "channel": "online-irembo",
+      "requires": ["art.national-id", "art.sale-agreement", "art.land-tax-clearance", "art.transfer-fee-payment"],
+      "produces": ["art.new-land-title"],
+      "cost": { "model": "free", "note": "Application itself; fees paid in the prior step." },
+      "duration": { "unit": "days", "min": 3, "max": 30 },
+      "rules": [
+        {
+          "id": "rule.missing-prerequisite-doc",
+          "kind": "completeness",
+          "severity": "high",
+          "failureMode": "rejection",
+          "message": "Application submitted without a required attachment (consent, clearance, or payment proof).",
+          "mitigation": "Don't allow submission until every prerequisite artifact for this profile is present (this is exactly what the dependency engine computes)."
+        }
+      ]
+    }
+  ],
+
+  "journeys": [
+    {
+      "id": "journey.open-restaurant",
+      "name": "Open a restaurant (sole proprietorship)",
+      "goalPhrases": [
+        "I want to open a restaurant",
+        "I want to start a food business",
+        "open a business",
+        "register my shop",
+        "ndashaka gufungura ubucuruzi"
+      ],
+      "outcomeArtifacts": [
+        "art.certificate-of-registration",
+        "art.trading-license",
+        "art.health-hygiene-certificate"
+      ],
+      "steps": [
+        { "order": 0, "service": "svc.choose-structure", "hidden": false, "note": "Decision, not on Irembo." },
+        { "order": 1, "service": "svc.verify-national-id", "hidden": false, "note": "Root of trust." },
+        { "order": 2, "service": "svc.provide-premises-proof", "hidden": false, "note": "Citizen-supplied: lease or land title. Collect early." },
+        { "order": 3, "service": "svc.name-reservation", "hidden": false },
+        { "order": 4, "service": "svc.business-registration", "hidden": false, "note": "What people THINK is the whole job." },
+        { "order": 5, "service": "svc.vat-registration", "hidden": false, "note": "Conditional on turnover." },
+        { "order": 6, "service": "svc.trading-license", "hidden": true, "note": "Hidden tail #1 — permission to operate." },
+        { "order": 7, "service": "svc.sector-permit-restaurant", "hidden": true, "note": "Hidden tail #2 — the one agents catch." },
+        { "order": 8, "service": "svc.rssb-registration", "hidden": true, "note": "Conditional on hiring." },
+        { "order": 9, "service": "svc.business-bank-account", "hidden": false },
+        { "order": 10, "service": "svc.acquire-ebm", "hidden": true, "note": "Conditional on VAT." }
+      ]
+    },
+    {
+      "id": "journey.transfer-land",
+      "name": "Transfer land ownership (sale)",
+      "goalPhrases": [
+        "I want to transfer land",
+        "I want to buy a plot",
+        "I want to sell my land",
+        "transfer a title to my name",
+        "guhindura nyir'ubutaka",
+        "kugurisha ubutaka"
+      ],
+      "outcomeArtifacts": [
+        "art.new-land-title"
+      ],
+      "steps": [
+        { "order": 0, "service": "svc.verify-national-id", "hidden": false, "note": "Both parties. SHARED with business journey." },
+        { "order": 1, "service": "svc.verify-land-title", "hidden": false, "note": "Is the seller actually the owner?" },
+        { "order": 2, "service": "svc.encumbrance-check", "hidden": true, "note": "Hidden front-load — is it mortgaged/disputed?" },
+        { "order": 3, "service": "svc.mortgage-release", "hidden": true, "note": "Conditional on a mortgage." },
+        { "order": 4, "service": "svc.obtain-spousal-consent", "hidden": true, "note": "Hidden front-load — THE classic rejection." },
+        { "order": 5, "service": "svc.obtain-coowner-consent", "hidden": true, "note": "Conditional on co-owned/family land." },
+        { "order": 6, "service": "svc.land-tax-clearance", "hidden": true, "note": "Hidden front-load — arrears surprise." },
+        { "order": 7, "service": "svc.notarize-sale-agreement", "hidden": false },
+        { "order": 8, "service": "svc.pay-transfer-fee", "hidden": false },
+        { "order": 9, "service": "svc.apply-land-transfer", "hidden": false, "note": "What people THINK is the whole transfer." }
+      ]
+    }
+  ]
+}

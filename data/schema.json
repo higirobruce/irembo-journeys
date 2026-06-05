@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://irembo-companion.rw/schema/journey-model.json",
+  "title": "Irembo Companion — Journey Data Model",
+  "description": "Artifact-based service-dependency model. Services CONSUME and PRODUCE artifacts; the dependency graph, path-finding, cost/time roll-ups and 'what is blocking me' are all derived by matching service.requires (artifact ids) against service.produces. Rules are attached per service and carry the mitigation the agent side-panel performs.",
+  "type": "object",
+  "required": ["version", "agencies", "artifacts", "services", "journeys"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "string", "description": "Semantic version of this dataset." },
+    "notes": { "type": "string", "description": "Free-text provenance/scope note for the dataset." },
+    "updatedAt": { "type": "string", "format": "date", "description": "Date the dataset content was last verified." },
+    "sourceConfidence": {
+      "type": "string",
+      "enum": ["verified", "needs-verification", "reverse-engineered"],
+      "description": "Provenance of the rules/fees. 'verified' = confirmed against an official source or agent interview; 'needs-verification' = drafted, must be confirmed (Q4)."
+    },
+    "agencies": { "type": "array", "items": { "$ref": "#/$defs/agency" } },
+    "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } },
+    "services": { "type": "array", "items": { "$ref": "#/$defs/service" } },
+    "journeys": { "type": "array", "items": { "$ref": "#/$defs/journey" } }
+  },
+
+  "$defs": {
+    "agency": {
+      "type": "object",
+      "required": ["id", "name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^agency\\.[a-z0-9-]+$" },
+        "name": { "type": "string" },
+        "fullName": { "type": "string" },
+        "type": { "type": "string", "enum": ["national", "local-government", "sector-regulator", "financial", "external", "self"] },
+        "notes": { "type": "string" }
+      }
+    },
+
+    "artifact": {
+      "type": "object",
+      "description": "A document, status, decision or credential that a service consumes or produces. Edges in the dependency graph are artifacts.",
+      "required": ["id", "name", "issuedBy"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^art\\.[a-z0-9-]+$" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "issuedBy": { "type": "string", "description": "agency id that produces this artifact." },
+        "kind": { "type": "string", "enum": ["identity", "document", "registration", "license", "permit", "tax-status", "decision", "financial"] },
+        "expirable": { "type": "boolean", "default": false, "description": "Has a validity window; eligibility rules may check freshness." },
+        "reusable": { "type": "boolean", "default": false, "description": "Candidate for a consented document vault — same artifact reused across journeys." }
+      }
+    },
+
+    "cost": {
+      "type": "object",
+      "required": ["model"],
+      "additionalProperties": false,
+      "properties": {
+        "model": { "type": "string", "enum": ["free", "fixed", "variable", "unknown"] },
+        "amount": { "type": "number", "description": "Amount when model = fixed." },
+        "currency": { "type": "string", "default": "RWF" },
+        "recurrence": { "type": "string", "enum": ["once", "annual"], "default": "once" },
+        "note": { "type": "string", "description": "Used for variable/unknown to explain the basis (e.g. 'depends on turnover band')." }
+      }
+    },
+
+    "duration": {
+      "type": "object",
+      "required": ["unit"],
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "unit": { "type": "string", "enum": ["minutes", "hours", "days", "weeks", "instant", "ongoing"] }
+      }
+    },
+
+    "condition": {
+      "type": "object",
+      "description": "Boolean test over the citizen profile. Either a leaf comparison (var/op/value) or a composite (allOf/anyOf).",
+      "additionalProperties": false,
+      "properties": {
+        "var": { "type": "string", "description": "Profile variable, e.g. 'annualTurnoverRWF', 'legalStructure', 'willHire', 'isForeigner', 'activity'." },
+        "op": { "type": "string", "enum": ["eq", "neq", "gte", "gt", "lte", "lt", "in", "exists"] },
+        "value": {},
+        "allOf": { "type": "array", "items": { "$ref": "#/$defs/condition" } },
+        "anyOf": { "type": "array", "items": { "$ref": "#/$defs/condition" } }
+      }
+    },
+
+    "rule": {
+      "type": "object",
+      "description": "A checkable failure point. The engine evaluates these to warn the agent BEFORE submission (human-in-the-loop).",
+      "required": ["id", "severity", "failureMode", "message", "mitigation"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^rule\\.[a-z0-9-]+$" },
+        "kind": { "type": "string", "enum": ["eligibility", "completeness", "external-dependency", "quality", "compliance"] },
+        "severity": { "type": "string", "enum": ["high", "medium", "low"] },
+        "failureMode": {
+          "type": "string",
+          "enum": ["rejection", "silent-liability", "illegal-operation", "rework"],
+          "description": "What actually happens if the rule is violated. Not all failures are explicit rejections — some are silent (tax) or lead to operating illegally (missing sector permit)."
+        },
+        "when": { "$ref": "#/$defs/condition", "description": "Optional: rule only applies when this condition holds." },
+        "message": { "type": "string", "description": "Plain-language description of the failure point." },
+        "mitigation": { "type": "string", "description": "What the companion / side-panel does to pre-empt it." }
+      }
+    },
+
+    "service": {
+      "type": "object",
+      "required": ["id", "name", "agency", "produces"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^svc\\.[a-z0-9-]+$" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "agency": { "type": "string", "description": "agency id." },
+        "channel": {
+          "type": "string",
+          "enum": ["online-irembo", "online-rdb", "online-rra", "in-person-district", "in-person-regulator", "bank", "offline-decision"]
+        },
+        "requires": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "artifact ids this service consumes (incoming edges)."
+        },
+        "produces": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "artifact ids this service emits (outgoing edges)."
+        },
+        "cost": { "$ref": "#/$defs/cost" },
+        "duration": { "$ref": "#/$defs/duration" },
+        "optional": { "type": "boolean", "default": false, "description": "Not always part of the path." },
+        "appliesWhen": { "$ref": "#/$defs/condition", "description": "If present, the service is only on the path when this holds." },
+        "rules": { "type": "array", "items": { "$ref": "#/$defs/rule" } }
+      }
+    },
+
+    "journeyStep": {
+      "type": "object",
+      "required": ["order", "service"],
+      "additionalProperties": false,
+      "properties": {
+        "order": { "type": "integer" },
+        "service": { "type": "string", "description": "svc id referenced at this step." },
+        "hidden": {
+          "type": "boolean",
+          "default": false,
+          "description": "TRUE for the 'invisible tail' — steps the citizen usually doesn't know exist (district license, sector permits). The core product value is surfacing these."
+        },
+        "note": { "type": "string" }
+      }
+    },
+
+    "journey": {
+      "type": "object",
+      "description": "A life event: an ordered composition of services toward an outcome.",
+      "required": ["id", "name", "outcomeArtifacts", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^journey\\.[a-z0-9-]+$" },
+        "name": { "type": "string" },
+        "goalPhrases": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Natural-language phrases that map a citizen's stated intent to this journey (NLU seed)."
+        },
+        "outcomeArtifacts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "The artifacts that together mean 'done & legally operating'. Note: more than just the registration certificate."
+        },
+        "steps": { "type": "array", "items": { "$ref": "#/$defs/journeyStep" } }
+      }
+    }
+  }
+}

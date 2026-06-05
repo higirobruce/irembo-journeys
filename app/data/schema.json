@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://irembo-companion.rw/schema/dataset.v1.json",
+  "title": "Irembo Journey Companion — Dataset (v1, unified)",
+  "description": "Canonical artifact-based service-dependency model. Services CONSUME (requires) and PRODUCE artifacts; the dependency graph, layout, rollups and 'what is blocking me' all derive from matching requires<->produces. Unifies our original schema with the Claude Design prototype's richer content (6 journeys, citizen-friendly fields, agency colors, admin lifecycle metadata). English strings are inline; Kinyarwanda lives in locales/rw.json (D7).",
+  "type": "object",
+  "required": ["version", "agencies", "artifacts", "services", "journeys"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "string" },
+    "updatedAt": { "type": "string" },
+    "sourceConfidence": { "type": "string", "enum": ["verified", "needs-verification", "reverse-engineered"] },
+    "defaultLocale": { "type": "string" },
+    "locales": { "type": "array", "items": { "type": "string" } },
+    "notes": { "type": "string" },
+    "agencies": { "type": "array", "items": { "$ref": "#/$defs/agency" } },
+    "artifacts": { "type": "array", "items": { "$ref": "#/$defs/artifact" } },
+    "services": { "type": "array", "items": { "$ref": "#/$defs/service" } },
+    "journeys": { "type": "array", "items": { "$ref": "#/$defs/journey" } },
+    "questions": {
+      "type": "object",
+      "description": "Adaptive intake questions keyed by journey id.",
+      "additionalProperties": { "type": "array", "items": { "$ref": "#/$defs/question" } }
+    }
+  },
+
+  "$defs": {
+    "agency": {
+      "type": "object",
+      "required": ["id", "name", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "name": { "type": "string" },
+        "short": { "type": "string", "description": "Mono badge label, e.g. RDB." },
+        "color": { "type": "string", "pattern": "^#([0-9A-Fa-f]{6})$", "description": "Fixed agency color (drives node/edge coding)." },
+        "where": { "type": "string", "description": "Plain-language 'where you do it'." },
+        "type": { "type": "string", "enum": ["national", "local-government", "sector-regulator", "financial", "external", "judicial", "self"] }
+      }
+    },
+
+    "artifact": {
+      "type": "object",
+      "description": "A document/status/decision that flows between steps — the graph edges.",
+      "required": ["id", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9:-]+$" },
+        "name": { "type": "string" },
+        "bring": { "type": "boolean", "default": false, "description": "Citizen must physically gather/arrange it." },
+        "issuedBy": { "type": "string", "description": "agency id that produces it (derived from producer; 'self' if citizen-brought)." }
+      }
+    },
+
+    "cost": {
+      "type": "object",
+      "required": ["model"],
+      "additionalProperties": false,
+      "properties": {
+        "model": { "type": "string", "enum": ["free", "fee", "fixed", "variable", "unknown"] },
+        "amount": { "type": "number" },
+        "currency": { "type": "string", "default": "RWF" },
+        "recurrence": { "type": "string", "enum": ["once", "annual"] },
+        "note": { "type": "string" }
+      }
+    },
+
+    "duration": {
+      "type": "object",
+      "required": ["unit"],
+      "additionalProperties": false,
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "unit": { "type": "string", "enum": ["instant", "min", "hour", "day", "week"] }
+      }
+    },
+
+    "condition": {
+      "type": "object",
+      "description": "Boolean test over the citizen profile (leaf or composite).",
+      "additionalProperties": false,
+      "properties": {
+        "v": { "type": "string", "description": "profile variable (e.g. annualTurnoverRWF, legalStructure, isForeigner)." },
+        "op": { "type": "string", "enum": ["eq", "neq", "gte", "gt", "lte", "lt", "in", "exists"] },
+        "val": {},
+        "allOf": { "type": "array", "items": { "$ref": "#/$defs/condition" } },
+        "anyOf": { "type": "array", "items": { "$ref": "#/$defs/condition" } }
+      }
+    },
+
+    "rule": {
+      "type": "object",
+      "required": ["severity", "failureMode", "message"],
+      "additionalProperties": false,
+      "properties": {
+        "severity": { "type": "string", "enum": ["high", "medium", "low"] },
+        "failureMode": { "type": "string", "enum": ["rejection", "silent-liability", "illegal-operation", "rework"] },
+        "when": { "anyOf": [{ "$ref": "#/$defs/condition" }, { "type": "null" }] },
+        "message": { "type": "string" },
+        "mitigation": { "type": "string" }
+      }
+    },
+
+    "meta": {
+      "type": "object",
+      "description": "Admin lifecycle metadata (per service).",
+      "required": ["status", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "status": { "type": "string", "enum": ["draft", "review", "published"] },
+        "source": { "type": "string", "enum": ["irembo", "manual"] },
+        "updated": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    },
+
+    "service": {
+      "type": "object",
+      "required": ["id", "name", "agency", "requires", "produces"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "name": { "type": "string" },
+        "short": { "type": "string", "description": "Short node label." },
+        "agency": { "type": "string", "description": "agency id." },
+        "desc": { "type": "string" },
+        "requires": { "type": "array", "items": { "type": "string" } },
+        "produces": { "type": "array", "items": { "type": "string" } },
+        "cost": { "$ref": "#/$defs/cost" },
+        "duration": { "$ref": "#/$defs/duration" },
+        "hidden": { "type": "boolean", "default": false, "description": "Commonly missed ('easy to forget')." },
+        "appliesWhen": { "anyOf": [{ "$ref": "#/$defs/condition" }, { "type": "null" }] },
+        "rules": { "type": "array", "items": { "$ref": "#/$defs/rule" } },
+        "_meta": { "$ref": "#/$defs/meta" }
+      }
+    },
+
+    "journeyStep": {
+      "type": "object",
+      "required": ["order", "service"],
+      "additionalProperties": false,
+      "properties": {
+        "order": { "type": "integer" },
+        "service": { "type": "string" }
+      }
+    },
+
+    "journey": {
+      "type": "object",
+      "required": ["id", "name", "steps"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "name": { "type": "string" },
+        "blurb": { "type": "string" },
+        "icon": { "type": "string" },
+        "goalPhrases": { "type": "array", "items": { "type": "string" } },
+        "outcomeArtifacts": { "type": "array", "items": { "type": "string" } },
+        "steps": { "type": "array", "items": { "$ref": "#/$defs/journeyStep" } }
+      }
+    },
+
+    "question": {
+      "type": "object",
+      "required": ["key", "label", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string" },
+        "label": { "type": "string" },
+        "type": { "type": "string", "enum": ["choice", "bool"] },
+        "def": {},
+        "opts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["v", "l"],
+            "additionalProperties": false,
+            "properties": { "v": {}, "l": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}

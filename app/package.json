@@ -1,0 +1,10 @@
+{
+  "name": "irembo-journey-companion",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "data:migrate": "node data/migrate.mjs",
+    "data:validate": "node data/validate.mjs",
+    "engine:test": "node engine/regression.mjs"
+  }
+}

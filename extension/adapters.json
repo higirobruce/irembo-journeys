@@ -1,0 +1,115 @@
+{
+  "version": "0.1.0",
+  "notes": "Page-adapter map: ties government portal pages to service nodes in data/dataset.json so the engine knows where the agent is, what to read, what to prefill, and which rules to pre-flight. ALL SELECTORS ARE PLACEHOLDERS (CONFIRM) — they must be captured from the live portals in a DOM-inventory pass. A broken selector disables only that page's enhancements, never the panel.",
+  "profileVars": {
+    "_comment": "Variables the engine reads for appliesWhen / rule.when. Populated from page reads or the agent's intake form.",
+    "nationalId": "string", "applicantName": "string", "applicantAge": "number", "isForeigner": "boolean",
+    "businessName": "string", "activity": "string", "legalStructure": "enterprise|company", "annualTurnoverRWF": "number", "willHire": "boolean",
+    "parcelUpi": "string", "sellerMarried": "boolean", "hasMortgage": "boolean", "isCoOwnedOrFamilyLand": "boolean"
+  },
+
+  "portals": [
+    { "id": "irembo", "name": "Irembo", "urlPattern": "*://*.irembo.gov.rw/*" },
+    { "id": "rdb", "name": "RDB business registration", "urlPattern": "*://*.rdb.rw/*", "note": "CONFIRM exact host (org.rdb.rw / businessregistration.rdb.rw)." },
+    { "id": "rlmua", "name": "RLMUA land", "urlPattern": "*://*.rlmua.gov.rw/*", "note": "CONFIRM host; land services may sit under irembo.gov.rw." }
+  ],
+
+  "pages": [
+    {
+      "id": "page.nid-verify",
+      "portal": "irembo",
+      "matchesService": "svc.verify-national-id",
+      "match": { "urlIncludes": ["/login", "/profile"], "domSignature": "[data-nid], #nationalId" },
+      "reads": [
+        { "selector": "#nationalId", "writeTo": "profile.nationalId" },
+        { "selector": "#fullName", "writeTo": "profile.applicantName" }
+      ],
+      "writes": [],
+      "submit": { "selector": "button[type=submit]", "preflightRules": ["rule.id-expired", "rule.minor", "rule.foreigner-status"] },
+      "successSignature": ".profile-verified",
+      "_confirm": "All selectors placeholder."
+    },
+    {
+      "id": "page.rdb.name-search",
+      "portal": "rdb",
+      "matchesService": "svc.name-reservation",
+      "match": { "urlIncludes": ["/name", "/name-reservation"], "domSignature": "#nameSearchForm" },
+      "reads": [
+        { "selector": "#proposedName", "writeTo": "profile.businessName" }
+      ],
+      "writes": [
+        { "selector": "#applicantId", "readFrom": "profile.nationalId" }
+      ],
+      "submit": { "selector": "#searchBtn", "preflightRules": ["rule.name-taken"] },
+      "successSignature": ".reservation-code",
+      "_confirm": "All selectors placeholder."
+    },
+    {
+      "id": "page.rdb.registration",
+      "portal": "rdb",
+      "matchesService": "svc.business-registration",
+      "match": { "urlIncludes": ["/register", "/incorporation"], "domSignature": "#registrationForm" },
+      "reads": [
+        { "selector": "#activityDescription", "writeTo": "profile.activity" },
+        { "selector": "#entityType", "writeTo": "profile.legalStructure" }
+      ],
+      "writes": [
+        { "selector": "#ownerId", "readFrom": "profile.nationalId" },
+        { "selector": "#ownerName", "readFrom": "profile.applicantName" },
+        { "selector": "#reservedName", "readFrom": "profile.businessName" }
+      ],
+      "submit": {
+        "selector": "#submitRegistration",
+        "preflightRules": ["rule.wrong-isic", "rule.address-hierarchy", "rule.company-incomplete", "rule.doc-quality"]
+      },
+      "successSignature": ".certificate-number",
+      "_confirm": "All selectors placeholder."
+    },
+    {
+      "id": "page.rlmua.title-lookup",
+      "portal": "rlmua",
+      "matchesService": "svc.verify-land-title",
+      "match": { "urlIncludes": ["/parcel", "/title"], "domSignature": "#upiLookup" },
+      "reads": [
+        { "selector": "#upi", "writeTo": "profile.parcelUpi" },
+        { "selector": "#ownerStatus", "writeTo": "profile.titleOwnerName" }
+      ],
+      "writes": [
+        { "selector": "#searchUpi", "readFrom": "profile.parcelUpi" }
+      ],
+      "submit": { "selector": "#lookupBtn", "preflightRules": ["rule.not-registered-owner"] },
+      "successSignature": ".parcel-details",
+      "_confirm": "All selectors placeholder."
+    },
+    {
+      "id": "page.rlmua.transfer-apply",
+      "portal": "rlmua",
+      "matchesService": "svc.apply-land-transfer",
+      "match": { "urlIncludes": ["/transfer"], "domSignature": "#transferApplication" },
+      "reads": [],
+      "writes": [
+        { "selector": "#sellerId", "readFrom": "profile.nationalId" },
+        { "selector": "#parcelUpi", "readFrom": "profile.parcelUpi" }
+      ],
+      "submit": {
+        "selector": "#submitTransfer",
+        "preflightRules": ["rule.missing-prerequisite-doc", "rule.missing-spousal-consent", "rule.encumbered-parcel", "rule.tax-arrears"]
+      },
+      "successSignature": ".transfer-reference",
+      "_confirm": "All selectors placeholder."
+    },
+    {
+      "id": "page.irembo.dashboard",
+      "portal": "irembo",
+      "matchesService": null,
+      "match": { "urlIncludes": ["/dashboard", "/applications"], "domSignature": ".applications-list" },
+      "reads": [
+        { "selector": ".application-row", "writeTo": "profile._applicationStatuses", "multiple": true, "note": "Scrape statuses to build the unified tracker (Phase 2)." }
+      ],
+      "writes": [],
+      "submit": null,
+      "successSignature": null,
+      "_confirm": "Status-scraping selectors placeholder."
+    }
+  ]
+}
