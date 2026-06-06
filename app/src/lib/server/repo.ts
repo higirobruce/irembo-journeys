@@ -58,7 +58,12 @@ class JsonRepo implements DataRepo {
 let _repo: DataRepo | null = null;
 export function getRepo(): DataRepo {
   if (_repo) return _repo;
-  // DATA_BACKEND=prisma will select PrismaRepo once the DB is provisioned (M4 proper).
+  // To switch to Postgres (after `prisma generate` + removing prismaRepo.ts from
+  // tsconfig "exclude"), uncomment:
+  //   if (process.env.DATA_BACKEND === "prisma") {
+  //     const { PrismaRepo } = require("./prismaRepo");
+  //     return (_repo = new PrismaRepo());
+  //   }
   _repo = new JsonRepo();
   return _repo;
 }

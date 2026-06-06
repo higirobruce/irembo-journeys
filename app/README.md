@@ -19,7 +19,8 @@ A repository seam lets the API run **now** (in-memory `JsonRepo` over `dataset.j
 src/lib/server/
   auth.ts        roles (editor/reviewer/publisher) + requirePermission guard
   repo.ts        DataRepo interface + JsonRepo (works today) + getRepo() factory
-  prismaRepo.ts  Postgres impl — skeleton (no @prisma/client import yet)
+  prismaRepo.ts  Postgres impl — full query bodies + DB<->canonical mappers
+                 (excluded from the build until `prisma generate`; see file header)
   scraper.ts     server-side Irembo scrape; fetchPage() is the real-fetch seam
 src/app/api/
   services/                 GET list · POST create (edit)
