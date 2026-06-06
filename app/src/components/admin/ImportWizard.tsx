@@ -174,14 +174,15 @@ export function ImportWizard({ state, agencies, onClose, onComplete }: {
 }
 
 function ExtractReview({ draft, setDraft, result, agencies }: {
-  draft: ScrapeResult["draft"]; setDraft: (d: ScrapeResult["draft"]) => void; result: { raw: ScrapeResult["raw"] }; agencies: Record<string, Agency>;
+  draft: ScrapeResult["draft"]; setDraft: (d: ScrapeResult["draft"]) => void; result: ScrapeResult; agencies: Record<string, Agency>;
 }) {
   const set = (patch: Partial<ScrapeResult["draft"]>) => setDraft({ ...draft, ...patch });
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18, fontSize: ".86rem", color: "var(--green)", fontWeight: 600 }}>
         <span className="tick" style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--green)", color: "#fff", display: "grid", placeItems: "center", fontSize: ".7rem" }}>✓</span>
-        Scraped <span className="mono" style={{ color: "var(--soft)" }}>{result.raw.url}</span> — review what we read:
+        {result.live ? "Scraped" : "Loaded"} <span className="mono" style={{ color: "var(--soft)" }}>{result.raw.url}</span> — review what we read:
+        {!result.live && <span className="chip" style={{ background: "var(--amber-soft)", color: "var(--amber)" }}>sample data</span>}
       </div>
       <div className="extract-grid">
         <div className="efield full"><label>Service name <span className="conf high">high</span></label>
