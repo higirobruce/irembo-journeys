@@ -144,8 +144,11 @@ Object.entries(questions).forEach(([jid, qs]) => qs.forEach((q) => {
   q.opts.forEach((o) => add(`question.${jid}.${q.key}.opt.${o.v}`, o.l));
 }));
 
+// preserve any existing Kinyarwanda translations across regenerations
+let existingRw = {};
+try { existingRw = JSON.parse(readFileSync(join(HERE, "locales/rw.json"), "utf8")); } catch { /* first run */ }
 const rw = {};
-Object.keys(en).forEach((k) => { rw[k] = ""; }); // empty scaffold
+Object.keys(en).forEach((k) => { rw[k] = existingRw[k] || ""; });
 
 writeFileSync(join(HERE, "locales/en.json"), JSON.stringify(en, null, 2) + "\n");
 writeFileSync(join(HERE, "locales/rw.json"), JSON.stringify(rw, null, 2) + "\n");
@@ -157,4 +160,4 @@ console.log(`  artifacts  ${artifacts.length}`);
 console.log(`  services   ${services.length}`);
 console.log(`  journeys   ${journeys.length}  (${journeys.map((j) => j.id).join(", ")})`);
 console.log(`  questions  ${Object.keys(questions).length} sets`);
-console.log(`  i18n keys  ${Object.keys(en).length}  (en filled, rw empty)`);
+console.log(`  i18n keys  ${Object.keys(en).length}  (en filled; rw preserved across regen)`);
