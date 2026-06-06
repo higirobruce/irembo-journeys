@@ -2,8 +2,10 @@
 /* Import-from-Irembo wizard: URL → simulated scrape → review extracted fields →
    link dependencies (auto-suggested) → save as Needs review. Ported to canonical shape. */
 import { useState, useEffect } from "react";
-import type { AdminState, AdminService, ScrapeDraft, ScrapeDoc } from "@/lib/adminStore";
-import * as ADMIN from "@/lib/adminStore";
+import type { AdminState, AdminService } from "@/lib/adminStore";
+import { SCRAPE_CATALOG, today } from "@/lib/adminStore";
+import { scrapeUrl } from "@/lib/apiClient";
+import type { ScrapeResult, ScrapedDoc } from "@/lib/server/scraper";
 import type { Agency, Artifact, Rule } from "@engine/types";
 
 const SCRAPE_STEPS = [
@@ -37,7 +39,7 @@ function ScrapeAnimation({ onDone }: { onDone: () => void }) {
   );
 }
 
-type WorkingDoc = ScrapeDoc & { include: boolean; mode: "link" | "bring" | "new" };
+type WorkingDoc = ScrapedDoc & { include: boolean; mode: "link" | "bring" | "new" };
 
 export function ImportWizard({ state, agencies, onClose, onComplete }: {
   state: AdminState; agencies: Record<string, Agency>; onClose: () => void;
@@ -45,15 +47,17 @@ export function ImportWizard({ state, agencies, onClose, onComplete }: {
 }) {
   const [step, setStep] = useState(1);
   const [url, setUrl] = useState("");
-  const [result, setResult] = useState<{ raw: ADMIN.ScrapeCatalogEntry; draft: ScrapeDraft } | null>(null);
-  const [draft, setDraft] = useState<ScrapeDraft | null>(null);
+  const [result, setResult] = useState<ScrapeResult | null>(null);
+  const [draft, setDraft] = useState<ScrapeResult["draft"] | null>(null);
   const [docs, setDocs] = useState<WorkingDoc[]>([]);
 
   function runScrape() { setResult(null); setStep(2); }
-  function finishScrape() {
-    const r = ADMIN.scrape(state, url);
-    setResult(r); setDraft(r.draft);
-    setDocs(r.draft.documents.map((d) => ({ ...d, include: true, mode: d.suggestLink ? "link" : (d.isNew ? "new" : "bring") })));
+  async function finishScrape() {
+    try {
+      const r = await scrapeUrl(url);
+      setResult(r); setDraft(r.draft);
+      setDocs(r.draft.documents.map((d) => ({ ...d, include: true, mode: d.suggestLink ? "link" : (d.isNew ? "new" : "bring") })));
+    } catch (e) { console.error("scrape failed", e); onClose(); }
   }
 
   const STEPS = ["Source", "Extract", "Dependencies", "Done"];
@@ -75,9 +79,9 @@ export function ImportWizard({ state, agencies, onClose, onComplete }: {
     const svc: AdminService = {
       id: draft!.id, name: draft!.name, short: draft!.short, agency: draft!.agency,
       cost: draft!.cost, duration: { min: draft!.duration.min, max: draft!.duration.max, unit: draft!.duration.unit as AdminService["duration"]["unit"] },
-      hidden: !!draft!.hidden, desc: draft!.desc, requires: req, produces: [outId],
+      hidden: false, desc: draft!.desc, requires: req, produces: [outId],
       rules: draft!.rules.map((r): Rule => ({ severity: r.severity as Rule["severity"], failureMode: r.failureMode as Rule["failureMode"], message: r.message, mitigation: r.mitigation })),
-      _meta: { status: "review", source: "irembo", updated: ADMIN.today(), note: "Imported from Irembo — verify before publishing" },
+      _meta: { status: "review", source: "irembo", updated: today(), note: "Imported from Irembo — verify before publishing" },
     };
     return { svc, newArtifacts };
   }
@@ -114,7 +118,7 @@ export function ImportWizard({ state, agencies, onClose, onComplete }: {
               </div>
               <div className="url-suggest">
                 <span className="us-label">Or try one from the catalog</span>
-                {ADMIN.SCRAPE_CATALOG.map((c) => (
+                {SCRAPE_CATALOG.map((c) => (
                   <div className="url-chip" key={c.id} onClick={() => setUrl(c.url)}>
                     <span style={{ color: "var(--brand)" }}>◆</span><span>{c.title}</span><span className="mono">{c.url}</span>
                   </div>
@@ -170,14 +174,15 @@ export function ImportWizard({ state, agencies, onClose, onComplete }: {
 }
 
 function ExtractReview({ draft, setDraft, result, agencies }: {
-  draft: ScrapeDraft; setDraft: (d: ScrapeDraft) => void; result: { raw: ADMIN.ScrapeCatalogEntry }; agencies: Record<string, Agency>;
+  draft: ScrapeResult["draft"]; setDraft: (d: ScrapeResult["draft"]) => void; result: ScrapeResult; agencies: Record<string, Agency>;
 }) {
-  const set = (patch: Partial<ScrapeDraft>) => setDraft({ ...draft, ...patch });
+  const set = (patch: Partial<ScrapeResult["draft"]>) => setDraft({ ...draft, ...patch });
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18, fontSize: ".86rem", color: "var(--green)", fontWeight: 600 }}>
         <span className="tick" style={{ width: 20, height: 20, borderRadius: "50%", background: "var(--green)", color: "#fff", display: "grid", placeItems: "center", fontSize: ".7rem" }}>✓</span>
-        Scraped <span className="mono" style={{ color: "var(--soft)" }}>{result.raw.url}</span> — review what we read:
+        {result.live ? "Scraped" : "Loaded"} <span className="mono" style={{ color: "var(--soft)" }}>{result.raw.url}</span> — review what we read:
+        {!result.live && <span className="chip" style={{ background: "var(--amber-soft)", color: "var(--amber)" }}>sample data</span>}
       </div>
       <div className="extract-grid">
         <div className="efield full"><label>Service name <span className="conf high">high</span></label>

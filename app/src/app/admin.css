@@ -257,3 +257,9 @@
   .editor-preview { display: none; }
   .kpis { grid-template-columns: 1fr 1fr; }
 }
+
+/* journey-assembly step controls (M5) */
+.jbtn { width: 26px; height: 26px; border: 1px solid var(--line); background: var(--paper); border-radius: 6px; cursor: pointer; color: var(--soft); font-size: .8rem; flex: 0 0 auto; }
+.jbtn:hover { background: var(--bg); color: var(--ink); }
+.jbtn:disabled { opacity: .35; cursor: not-allowed; }
+.jbtn.danger:hover { color: var(--red); border-color: var(--red); }

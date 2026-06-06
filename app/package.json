@@ -7,9 +7,16 @@
     "start": "next start",
     "data:migrate": "node data/migrate.mjs",
     "data:validate": "node data/validate.mjs",
-    "engine:test": "node engine/regression.mjs"
+    "engine:test": "node engine/regression.mjs",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "cheerio": "^1.2.0",
     "next": "14.2.15",
     "react": "18.3.1",
     "react-dom": "18.3.1"

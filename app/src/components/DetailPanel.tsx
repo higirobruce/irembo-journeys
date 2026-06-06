@@ -35,12 +35,12 @@ export function DetailPanel({ node, agencies, allNodes, done, progress, onClose,
           <div className="ag-line">
             <span className="ag-dot" style={{ background: ag.color }} />
             <span className="ag-name">{t(`agency.${svc.agency}.where`, ag.where || "")}</span>
-            {svc.hidden && <span className="chip hidden">easy to forget</span>}
+            {svc.hidden && <span className="chip hidden">{t("ui.chip.missed", "easy to forget")}</span>}
           </div>
           <h2>{t(`service.${svc.id}.name`, svc.name)}</h2>
           <div className="detail-meta">
-            <div className="mpill"><span className="mk">Cost</span><span className="mv" style={{ color: isFree ? "var(--green)" : "var(--amber)" }}>{isFree ? "Free" : "Has a fee"}</span></div>
-            <div className="mpill"><span className="mk">How long</span><span className="mv">{ENGINE.fmtDurFriendly(svc)}</span></div>
+            <div className="mpill"><span className="mk">{t("ui.detail.cost", "Cost")}</span><span className="mv" style={{ color: isFree ? "var(--green)" : "var(--amber)" }}>{isFree ? t("ui.chip.free", "Free") : t("ui.chip.fee", "Has a fee")}</span></div>
+            <div className="mpill"><span className="mk">{t("ui.detail.howlong", "How long")}</span><span className="mv">{ENGINE.fmtDurFriendly(svc)}</span></div>
           </div>
         </div>
 
@@ -49,7 +49,7 @@ export function DetailPanel({ node, agencies, allNodes, done, progress, onClose,
 
           {deps.length > 0 && (
             <>
-              <h4>You need to finish first</h4>
+              <h4>{t("ui.detail.needfirst", "You need to finish first")}</h4>
               {deps.map((d) => (
                 <div className="dep-item" key={d.id}>
                   <span className={`pin ${d.done ? "ok" : "todo"}`}>{d.done ? "✓" : ""}</span>
@@ -61,14 +61,14 @@ export function DetailPanel({ node, agencies, allNodes, done, progress, onClose,
 
           {brings.length > 0 && (
             <>
-              <h4>Bring / arrange yourself</h4>
+              <h4>{t("ui.detail.bring", "Bring / arrange yourself")}</h4>
               {brings.map((b, i) => <div className="bring-item" key={i}>{b}</div>)}
             </>
           )}
 
           {svc.rules && svc.rules.length > 0 && (
             <>
-              <h4>Good to know</h4>
+              <h4>{t("ui.detail.goodtoknow", "Good to know")}</h4>
               {svc.rules.map((r, i) => (
                 <div className={`rule ${r.severity === "high" ? "high" : "med"}`} key={i}>
                   <span className="ric">{r.severity === "high" ? "⚠" : "!"}</span>
@@ -80,7 +80,7 @@ export function DetailPanel({ node, agencies, allNodes, done, progress, onClose,
 
           {unlocks.length > 0 && (
             <>
-              <h4>This opens up</h4>
+              <h4>{t("ui.detail.opensup", "This opens up")}</h4>
               <div style={{ fontSize: ".88rem", color: "var(--soft)" }}>{unlocks.join(" · ")}</div>
             </>
           )}
@@ -89,7 +89,7 @@ export function DetailPanel({ node, agencies, allNodes, done, progress, onClose,
         {progress && (
           <div className="detail-foot">
             <button className={`btn ${isDone ? "undo-btn" : "done-btn"}`} onClick={() => onToggleDone(node.id)}>
-              {isDone ? "↩ Mark as not done" : "✓ Mark this step done"}
+              {isDone ? t("ui.detail.markundone", "↩ Mark as not done") : t("ui.detail.markdone", "✓ Mark this step done")}
             </button>
           </div>
         )}

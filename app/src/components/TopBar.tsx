@@ -2,7 +2,7 @@
 import { useLocale } from "@/lib/i18n";
 
 export function TopBar({ audience, setAudience }: { audience: string; setAudience: (a: string) => void }) {
-  const { locale, setLocale } = useLocale();
+  const { locale, setLocale, t } = useLocale();
   return (
     <div className="topbar">
       <div className="brandmark">
@@ -13,8 +13,8 @@ export function TopBar({ audience, setAudience }: { audience: string; setAudienc
       </div>
       <div className="topbar-right">
         <div className="audience-toggle">
-          <button className={audience === "citizen" ? "on" : ""} onClick={() => setAudience("citizen")}>Citizen</button>
-          <button className={audience === "agent" ? "on" : ""} onClick={() => setAudience("agent")}>Agent</button>
+          <button className={audience === "citizen" ? "on" : ""} onClick={() => setAudience("citizen")}>{t("ui.topbar.citizen", "Citizen")}</button>
+          <button className={audience === "agent" ? "on" : ""} onClick={() => setAudience("agent")}>{t("ui.topbar.agent", "Agent")}</button>
         </div>
         <div className="lang" onClick={() => setLocale(locale === "en" ? "rw" : "en")} title="Switch language">
           🌐 {locale === "en" ? "English" : "Kinyarwanda"} ▾
@@ -29,7 +29,8 @@ export function TopBar({ audience, setAudience }: { audience: string; setAudienc
 }
 
 export function Wizard({ screen }: { screen: number }) {
-  const steps = ["Your goal", "A few questions", "Your journey"];
+  const { t } = useLocale();
+  const steps = [t("ui.wiz.goal", "Your goal"), t("ui.wiz.questions", "A few questions"), t("ui.wiz.journey", "Your journey")];
   return (
     <div className="wiz">
       {steps.map((s, i) => (

@@ -169,7 +169,7 @@ function NodeCard({ n, variant, dim, agency, progress, status, isGoal, dimmed, s
             <div className="top">
               <span className="ag-ico" style={{ background: agency.color }}>{agIcon}</span>
               <div className="top-txt">
-                <span className="step-n">Step {n.order}</span>
+                <span className="step-n">{t("ui.node.step", "Step")} {n.order}</span>
                 <span className="nm">{name}</span>
               </div>
             </div>
@@ -178,8 +178,8 @@ function NodeCard({ n, variant, dim, agency, progress, status, isGoal, dimmed, s
             </div>
             <div className="meta">
               <span className="time-pill">🕑 {durChip}</span>
-              <span className={`chip ${isFree ? "free" : "fee"}`}>{isFree ? "Free" : "Has a fee"}</span>
-              {svc.hidden && <span className="chip hidden">easy to forget</span>}
+              <span className={`chip ${isFree ? "free" : "fee"}`}>{isFree ? t("ui.chip.free", "Free") : t("ui.chip.fee", "Has a fee")}</span>
+              {svc.hidden && <span className="chip hidden">{t("ui.chip.missed", "easy to forget")}</span>}
             </div>
           </>
         )}

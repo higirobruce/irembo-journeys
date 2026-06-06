@@ -3,7 +3,7 @@ import { ENGINE, dataset } from "@/lib/data";
 import { useLocale } from "@/lib/i18n";
 import { JourneyIcons } from "./icons";
 
-export function GoalScreen({ goalText, setGoalText, journeyId, pickJourney, onContinue, audience }: {
+export function GoalScreen({ goalText, setGoalText, journeyId, pickJourney, onContinue }: {
   goalText: string; setGoalText: (v: string) => void; journeyId: string | null;
   pickJourney: (id: string) => void; onContinue: () => void; audience: string;
 }) {
@@ -12,15 +12,14 @@ export function GoalScreen({ goalText, setGoalText, journeyId, pickJourney, onCo
     const v = e.target.value; setGoalText(v);
     const m = ENGINE.matchGoal(v); if (m) pickJourney(m);
   }
-  const who = audience === "agent" ? "the citizen wants" : "you want";
   return (
     <>
-      <h1 className="title">What do {who} to do?</h1>
-      <p className="sub">Tell us the life event — we&apos;ll map the whole path, including the steps people usually don&apos;t know about, and how they depend on each other.</p>
+      <h1 className="title">{t("ui.goal.title", "What do you want to do?")}</h1>
+      <p className="sub">{t("ui.goal.sub")}</p>
       <div className="search">
-        <input value={goalText} onChange={onType} placeholder={'e.g. "open a restaurant" or "transfer a plot to my name"'} />
+        <input value={goalText} onChange={onType} placeholder={t("ui.goal.search")} />
       </div>
-      <div className="or-label">Or pick one</div>
+      <div className="or-label">{t("ui.goal.orpick", "Or pick one")}</div>
       <div className="goalgrid">
         {dataset.journeys.map((j) => (
           <div key={j.id} className={`goalcard ${journeyId === j.id ? "sel" : ""}`} onClick={() => pickJourney(j.id)}>
@@ -32,7 +31,7 @@ export function GoalScreen({ goalText, setGoalText, journeyId, pickJourney, onCo
       </div>
       <div className="row">
         <span />
-        <button className="btn primary" disabled={!journeyId} onClick={onContinue}>Continue →</button>
+        <button className="btn primary" disabled={!journeyId} onClick={onContinue}>{t("ui.goal.continue", "Continue →")}</button>
       </div>
     </>
   );
