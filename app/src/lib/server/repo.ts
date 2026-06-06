@@ -18,6 +18,7 @@ export interface DataRepo {
   setStatus(id: string, status: Status): Promise<ServiceRecord | null>;
   listArtifacts(): Promise<Artifact[]>;
   listJourneys(): Promise<Journey[]>;
+  updateJourneySteps(id: string, steps: string[]): Promise<Journey | null>;
   producerOf(artifactId: string): Promise<string | null>;
   importService(svc: ServiceRecord, newArtifacts: Record<string, Artifact>): Promise<ServiceRecord>;
 }
@@ -28,9 +29,11 @@ const today = () => new Date().toISOString().slice(0, 10);
 class JsonRepo implements DataRepo {
   private services = new Map<string, ServiceRecord>();
   private artifacts = new Map<string, Artifact>();
+  private journeys = new Map<string, Journey>();
   constructor() {
     dataset.services.forEach((s) => this.services.set(s.id, structuredClone(s) as ServiceRecord));
     dataset.artifacts.forEach((a) => this.artifacts.set(a.id, structuredClone(a)));
+    dataset.journeys.forEach((j) => this.journeys.set(j.id, structuredClone(j)));
   }
   async listServices() { return [...this.services.values()]; }
   async getService(id: string) { return this.services.get(id) ?? null; }
@@ -44,7 +47,12 @@ class JsonRepo implements DataRepo {
     this.services.set(id, rec); return rec;
   }
   async listArtifacts() { return [...this.artifacts.values()]; }
-  async listJourneys() { return dataset.journeys; }
+  async listJourneys() { return [...this.journeys.values()]; }
+  async updateJourneySteps(id: string, steps: string[]) {
+    const j = this.journeys.get(id); if (!j) return null;
+    const updated = { ...j, steps: steps.map((service, order) => ({ order, service })) };
+    this.journeys.set(id, updated); return updated;
+  }
   async producerOf(artifactId: string) {
     for (const s of this.services.values()) if ((s.produces || []).includes(artifactId)) return s.id;
     return null;

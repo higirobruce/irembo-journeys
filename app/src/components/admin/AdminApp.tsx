@@ -70,6 +70,13 @@ export function AdminApp() {
       flash(`Imported "${saved.name}" — added to the review queue`);
     } catch (e) { flash("Error: " + (e as Error).message); }
   }
+  async function saveJourney(id: string, steps: string[]) {
+    try {
+      await api.updateJourney(id, steps);
+      setState((s) => s && ({ ...s, journeys: { ...s.journeys, [id]: { ...s.journeys[id], steps } } }));
+      flash("Journey path updated — live for citizens");
+    } catch (e) { flash("Error: " + (e as Error).message); }
+  }
   function reload() { setState(null); setErr(null); load(); flash("Reloaded from server"); }
 
   if (err) return <div style={{ padding: 40, color: "var(--red)" }}>Failed to load admin: {err}</div>;
@@ -134,7 +141,7 @@ export function AdminApp() {
             <div className="main-body">
               {section === "catalog" && <Catalog state={state} agencies={AGENCIES} onOpen={setEditId} />}
               {section === "review" && <ReviewQueue state={state} agencies={AGENCIES} onOpen={setEditId} onApprove={approve} />}
-              {section === "journeys" && <JourneysView state={state} agencies={AGENCIES} />}
+              {section === "journeys" && <JourneysView state={state} agencies={AGENCIES} onSave={saveJourney} />}
             </div>
           </>
         )}
