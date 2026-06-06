@@ -32,10 +32,15 @@ export function AdminApp() {
   const [importing, setImporting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  const [user, setUser] = useState<api.Me | null>(null);
   function load() {
     api.fetchState().then((d) => setState(buildState(d.services, d.artifacts, d.journeys))).catch((e) => setErr(String(e.message || e)));
   }
-  useEffect(() => { load(); document.documentElement.setAttribute("data-theme", localStorage.getItem("irembo.theme") || "light"); }, []);
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("irembo.theme") || "light");
+    api.me().then((u) => { if (!u) { window.location.href = "/signin"; return; } setUser(u); load(); }).catch(() => { window.location.href = "/signin"; });
+  }, []);
+  async function signOut() { await api.logout(); window.location.href = "/signin"; }
 
   const flash = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
   const counts = useMemo(() => (state ? ADMIN.statusCounts(state) : { published: 0, review: 0, draft: 0 }), [state]);
@@ -68,6 +73,7 @@ export function AdminApp() {
   function reload() { setState(null); setErr(null); load(); flash("Reloaded from server"); }
 
   if (err) return <div style={{ padding: 40, color: "var(--red)" }}>Failed to load admin: {err}</div>;
+  if (!user) return <div style={{ padding: 40, color: "var(--soft)" }}>Redirecting to sign in…</div>;
   if (!state) return <div style={{ padding: 40, color: "var(--soft)" }}>Loading admin…</div>;
 
   const heads = {
@@ -94,8 +100,13 @@ export function AdminApp() {
           <button className="nav-item" onClick={() => setEditId(null)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14" /></svg> New service</button>
         </nav>
         <div className="side-foot">
+          <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "2px 4px 10px", fontSize: ".8rem" }}>
+            <span style={{ width: 28, height: 28, borderRadius: "50%", background: "var(--brand-soft)", color: "var(--brand)", display: "grid", placeItems: "center", fontWeight: 800, flex: "0 0 auto" }}>{(user.name || user.email).slice(0, 1).toUpperCase()}</span>
+            <span style={{ minWidth: 0 }}><b style={{ display: "block", color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{user.name || user.email}</b><span style={{ color: "var(--faint)", textTransform: "capitalize" }}>{user.role}</span></span>
+          </div>
           <a href="/"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><path d="M15 3h6v6M10 14 21 3" /></svg> Open citizen app</a>
           <a onClick={reload} style={{ cursor: "pointer" }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg> Reload from server</a>
+          <a onClick={signOut} style={{ cursor: "pointer" }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5M21 12H9" /></svg> Sign out</a>
         </div>
       </aside>
 
