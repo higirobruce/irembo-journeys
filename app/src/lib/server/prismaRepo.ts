@@ -110,6 +110,12 @@ export class PrismaRepo implements DataRepo {
       steps: j.steps.map((service, order) => ({ order, service })),
     }));
   }
+  async updateJourneySteps(id: string, steps: string[]): Promise<Journey | null> {
+    try {
+      const j = await db.journey.update({ where: { id }, data: { steps } });
+      return { id: j.id, name: j.name, blurb: j.blurb ?? undefined, icon: j.icon ?? undefined, goalPhrases: j.goalPhrases, outcomeArtifacts: j.outcomeArtifacts, steps: j.steps.map((service, order) => ({ order, service })) };
+    } catch { return null; }
+  }
   async producerOf(artifactId: string): Promise<string | null> {
     const row = await db.service.findFirst({ where: { produces: { has: artifactId } }, select: { id: true } });
     return row?.id ?? null;

@@ -41,3 +41,6 @@ export async function scrapeUrl(url: string): Promise<ScrapeResult> {
 export async function importService(svc: ServiceRecord, newArtifacts: Record<string, Artifact>): Promise<ServiceRecord> {
   return (await jsonOrThrow(await fetch("/api/import", { method: "POST", headers, body: JSON.stringify({ svc, newArtifacts }) }))).service;
 }
+export async function updateJourney(id: string, steps: string[]): Promise<Journey> {
+  return (await jsonOrThrow(await fetch(`/api/journeys/${id}`, { method: "PATCH", headers, body: JSON.stringify({ steps }) }))).journey;
+}
