@@ -21,14 +21,14 @@ export function JourneyBar({ journey, rollup, progress, onToggleProgress, filter
           <small>Personalized to your answers · {progress ? `${doneCount}/${rollup.steps} done (${pct}%)` : "tap any step for details"}</small>
         </div>
         <div className="stats">
-          <div className="stat"><div className="big a">{rollup.steps}</div><div className="lab">Steps</div></div>
-          <div className="stat"><div className="big v">{rollup.hidden}</div><div className="lab">Easy to forget</div></div>
-          <div className="stat"><div className="big">~{rollup.lo}–{rollup.hi}</div><div className="lab">Days</div></div>
-          <div className="stat"><div className="big">{rollup.fees ? "Some" : "Free"}</div><div className="lab">{rollup.fees ? "fees" : "no fees"}</div></div>
+          <div className="stat"><div className="big a">{rollup.steps}</div><div className="lab">{t("ui.bar.steps", "Steps")}</div></div>
+          <div className="stat"><div className="big v">{rollup.hidden}</div><div className="lab">{t("ui.bar.missed", "Easy to forget")}</div></div>
+          <div className="stat"><div className="big">~{rollup.lo}–{rollup.hi}</div><div className="lab">{t("ui.bar.days", "Days")}</div></div>
+          <div className="stat"><div className="big">{rollup.fees ? t("ui.bar.some", "Some") : t("ui.bar.free", "Free")}</div><div className="lab">{rollup.fees ? t("ui.bar.fees", "fees") : t("ui.bar.nofees", "no fees")}</div></div>
         </div>
         <div className="spacer" />
         <div className={`prog-toggle ${progress ? "on" : ""}`} onClick={onToggleProgress}>
-          <span className="switch" /> Track my progress
+          <span className="switch" /> {t("ui.bar.progress", "Track my progress")}
         </div>
       </div>
 
