@@ -59,8 +59,9 @@ export interface ScrapedDoc {
 }
 export interface ScrapeResult {
   raw: RawPage;
-  draft: { name: string; short: string; agency: string; cost: { model: string }; duration: { min: number; max: number; unit: string }; desc: string; documents: ScrapedDoc[]; rules: { severity: string; failureMode: string; message: string; mitigation: string }[] };
+  draft: { id: string; name: string; short: string; agency: string; cost: { model: string }; duration: { min: number; max: number; unit: string }; desc: string; documents: ScrapedDoc[]; rules: { severity: string; failureMode: string; message: string; mitigation: string }[] };
 }
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 32);
 
 export async function scrape(repo: DataRepo, url: string): Promise<ScrapeResult> {
   const page = await fetchPage(url);
@@ -83,6 +84,7 @@ export async function scrape(repo: DataRepo, url: string): Promise<ScrapeResult>
   return {
     raw: page,
     draft: {
+      id: slug(page.title.replace(/\(.*?\)/g, "")),
       name: page.title,
       short: page.title.replace(/\(.*?\)/g, "").trim().split(" ").slice(0, 2).join(" "),
       agency: page.agency_guess,
